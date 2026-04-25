@@ -692,11 +692,11 @@ def main() -> None:
 
     # Attacker rows → prompts for attacker role
     for row in all_attacker_data:
-        parent = next((s for s in parent_specs if s.task_id == row["parent"]), None)
-        if parent is None:
+        spec = next((s for s in parent_specs if s.task_id == row["parent"]), None)
+        if spec is None:
             continue
         train_rows.append({
-            "prompt": build_attacker_prompt(parent),
+            "prompt": [{"role": "user", "content": build_attacker_prompt(spec)}],
             "role": "attacker",
             "parent_task_id": row["parent"],
             "task_id": row.get("child_task_id", ""),
@@ -711,7 +711,7 @@ def main() -> None:
             continue
         graph = compile_scenario(spec)
         train_rows.append({
-            "prompt": build_defender_prompt(spec),
+            "prompt": [{"role": "user", "content": build_defender_prompt(spec)}],
             "role": "defender",
             "parent_task_id": "",
             "task_id": spec.task_id,
@@ -721,6 +721,11 @@ def main() -> None:
 
     rng.shuffle(train_rows)
     print(f"Combined training dataset: {len(train_rows)} rows")
+
+    # SAVING SELF PLAY GENERATIONS
+    dataset_path = args.out_dir / "selfplay_dataset.jsonl"
+    dataset_path.write_text("\n".join(json.dumps(row) for row in train_rows) + "\n", encoding="utf-8")
+    print(f"Saved generated dataset to {dataset_path}")
 
     # ------------------------------------------------------------------
     # 6. GRPOTrainer (DrGRPO)

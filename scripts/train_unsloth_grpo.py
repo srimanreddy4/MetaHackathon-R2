@@ -320,7 +320,13 @@ def main() -> None:
     start = time.time()
 
     task_ids = load_task_ids(args.curriculum_buffer, args.max_tasks, args.seed)
-    rows = [inspect_task(task_id) for task_id in task_ids]
+    rows = []
+    for task_id in task_ids:
+        row = inspect_task(task_id)
+        # Wrap prompt in chat template list for TRL formatting
+        row["prompt"] = [{"role": "user", "content": row["prompt"]}]
+        rows.append(row)
+        
     random.Random(args.seed).shuffle(rows)
     eval_rows = rows[: min(args.eval_tasks, len(rows))]
 

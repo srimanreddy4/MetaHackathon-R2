@@ -39,7 +39,7 @@ python scripts/train_spice_selfplay.py \
   --eval-tasks 12 \
   --max-tasks 120 \
   --logging-steps 1 \
-  --save-steps 100 \
+  --save-steps 50 \
   --seed 20260424
 
 echo ""
