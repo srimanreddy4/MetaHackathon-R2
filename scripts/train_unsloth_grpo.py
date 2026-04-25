@@ -216,12 +216,12 @@ def load_task_ids(curriculum_buffer: Path | None, max_tasks: int | None, seed: i
     if curriculum_buffer and curriculum_buffer.exists():
         buffer = RegretBuffer.load(curriculum_buffer)
         scenarios = buffer.scenarios
-        medium = [item for item in scenarios if 0.40 <= item.solve_rate <= 0.70]
+        medium = [item for item in scenarios if 0.55 <= item.solve_rate <= 0.70]
         if medium:
-            print(f"[curriculum] keeping {len(medium)}/{len(scenarios)} medium-difficulty scenarios (0.40 <= solve_rate <= 0.70)")
+            print(f"[curriculum] keeping {len(medium)}/{len(scenarios)} stable-difficulty scenarios (0.55 <= solve_rate <= 0.70)")
             scenarios = medium
         else:
-            print(f"[curriculum] WARN: no medium scenarios found; using full buffer")
+            print(f"[curriculum] WARN: no stable scenarios found; using full buffer")
         task_ids = list(dict.fromkeys([item.spec.task_id for item in scenarios]))
     rng = random.Random(seed)
     rng.shuffle(task_ids)
