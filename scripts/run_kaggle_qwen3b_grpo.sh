@@ -107,7 +107,20 @@ case "${MODE}" in
     python scripts/summarize_unsloth_grpo.py training_results/unsloth_grpo_qwen3b_kaggle
     ;;
   easy-summary)
-    python scripts/summarize_unsloth_grpo.py training_results/unsloth_grpo_qwen3b_easy
+    python scripts/summarize_unsloth_grpo.py \
+      training_results/unsloth_grpo_qwen3b_easy \
+      --write-report \
+      --plots-dir docs/plots \
+      --plot-prefix easy_grpo_qwen3b
+    ;;
+  easy-eval-checkpoint)
+    python scripts/evaluate_unsloth_checkpoint.py \
+      --run-dir training_results/unsloth_grpo_qwen3b_easy \
+      --model-name "${MODEL_NAME}" \
+      --max-seq-length 1280 \
+      --max-completion-length 256 \
+      --eval-tasks 32 \
+      --reward-mode easy
     ;;
   *)
     cat >&2 <<EOF
@@ -125,6 +138,7 @@ Usage:
   bash scripts/run_kaggle_qwen3b_grpo.sh fallback-1b5
   bash scripts/run_kaggle_qwen3b_grpo.sh summary
   bash scripts/run_kaggle_qwen3b_grpo.sh easy-summary
+  bash scripts/run_kaggle_qwen3b_grpo.sh easy-eval-checkpoint
   bash scripts/run_kaggle_qwen3b_grpo.sh archive
 EOF
     exit 2
