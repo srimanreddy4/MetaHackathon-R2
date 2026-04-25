@@ -171,6 +171,8 @@ def defender_rollout_reward(
     This compiles the spec into a live env, steps through the parsed commands,
     auto-submits declare_resolved + RCA, and returns the raw reward.
     """
+    from oncallenv.core.tools import ToolRuntime
+
     text = extract_completion_text(completion)
     commands = parse_commands(text)
     if not commands:
@@ -181,23 +183,30 @@ def defender_rollout_reward(
     root_category = graph.root_cause_category
 
     env = OnCallRedShiftEnv()
-    env.reset(task_id=spec.task_id)
-    # Override the runtime graph with the one compiled from this spec
-    env._runtime = __import__(
-        "oncallenv.core.tools", fromlist=["ToolRuntime"]
-    ).ToolRuntime(graph)
+    env.reset() # Blank reset
+    # Override with our specific spec and compiled graph
+    env._scenario = spec
+    env._runtime = ToolRuntime(graph)
     env._state.task_id = spec.task_id
+    env._state.scenario = spec
 
+    max_reward = 0.0
     obs = None
     for command in commands:
         obs = env.step(Action(command=command))
+        max_reward = max(max_reward, float(obs.reward or 0.0))
         if obs.done:
             break
-    if not any(c == "declare_resolved" for c in commands):
-        obs = env.step(Action(command="declare_resolved"))
-    obs = env.step(Action(command=f"submit_rca {build_rca(root_service, root_category)}"))
+            
+    if obs is not None and not obs.done:
+        if not any(c == "declare_resolved" for c in commands):
+            obs = env.step(Action(command="declare_resolved"))
+            max_reward = max(max_reward, float(obs.reward or 0.0))
+        
+        if not obs.done:
+            obs = env.step(Action(command=f"submit_rca {build_rca(root_service, root_category)}"))
+            max_reward = max(max_reward, float(obs.reward or 0.0))
 
-    reward = float(obs.reward or 0.0)
     format_bonus = 0.05 if "<actions>" in text.lower() and "</actions>" in text.lower() else 0.0
     concise_bonus = 0.03 if 2 <= len(commands) <= 8 else 0.0
-    return max(-0.25, min(1.1, reward + format_bonus + concise_bonus))
+    return max(-0.25, min(1.1, max_reward + format_bonus + concise_bonus))
