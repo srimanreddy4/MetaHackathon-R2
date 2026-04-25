@@ -199,10 +199,12 @@ def inspect_task(task_id: str, *, prompt_mode: str = "hard", template: str = "st
     }
 
 
-def load_task_ids(curriculum_buffer: Path | None, max_tasks: int | None, seed: int) -> list[str]:
+def load_task_ids(curriculum_buffer: Path | None, max_tasks: int | None, seed: int, max_buffer_size: int = 0) -> list[str]:
     task_ids = list(SEED_TASKS)
     if curriculum_buffer and curriculum_buffer.exists():
         buffer = RegretBuffer.load(curriculum_buffer)
+        if max_buffer_size > 0 and len(buffer.scenarios) > max_buffer_size:
+            buffer.scenarios = buffer.scenarios[:max_buffer_size]
         task_ids = list(dict.fromkeys([item.spec.task_id for item in buffer.scenarios]))
     rng = random.Random(seed)
     rng.shuffle(task_ids)
@@ -345,10 +347,12 @@ def _load_buffer(path: Path) -> RegretBuffer:
     return RegretBuffer([])
 
 
-def apply_feedback_to_buffer(path: Path, feedback: dict[str, list[float]], *, verbose: bool = False) -> dict[str, Any]:
+def apply_feedback_to_buffer(path: Path, feedback: dict[str, list[float]], *, verbose: bool = False, max_buffer_size: int = 0) -> dict[str, Any]:
     if not feedback:
         return {"updated_tasks": 0, "added_tasks": 0}
     buffer = _load_buffer(path)
+    if max_buffer_size > 0 and len(buffer.scenarios) > max_buffer_size:
+        buffer.scenarios = buffer.scenarios[:max_buffer_size]
     by_task = {item.spec.task_id: item for item in buffer.scenarios}
     updated = 0
     new_solve_rates: list[float] = []
@@ -423,10 +427,12 @@ def evolve_curriculum(
                 runner.archive.add(runner.mutator.novelty_key(item.spec))
     before = len(runner.buffer)
     buffer = runner.evolve(args.curriculum_evolve_iterations)
+    if args.max_buffer_size > 0 and len(buffer.scenarios) > args.max_buffer_size:
+        buffer.scenarios = buffer.scenarios[:args.max_buffer_size]
     buffer.save(args.curriculum_buffer)
     if verbose:
-        print(f"[CURRICULUM_EVOLVE] before={before} after={len(buffer)} iterations={args.curriculum_evolve_iterations}")
-    return {"evolved_count": max(0, len(buffer) - before)}
+        print(f"[CURRICULUM_EVOLVE] before={before} after={len(buffer.scenarios)} iterations={args.curriculum_evolve_iterations}")
+    return {"evolved_count": max(0, len(buffer.scenarios) - before)}
 
 
 def evaluate_model(model, tokenizer, task_rows: list[dict[str, Any]], out_path: Path, max_new_tokens: int, reward_mode: str = "hard") -> dict[str, Any]:
@@ -543,6 +549,7 @@ def main() -> None:
     parser.add_argument("--out-dir", type=Path, default=Path("training_results/unsloth_grpo"))
     parser.add_argument("--curriculum-buffer", type=Path, default=Path("curriculum_results/buffer.json"))
     parser.add_argument("--max-tasks", type=int, default=120)
+    parser.add_argument("--max-buffer-size", type=int, default=0)
     parser.add_argument("--max-steps", type=int, default=600)
     parser.add_argument("--per-device-train-batch-size", type=int, default=4)
     parser.add_argument("--gradient-accumulation-steps", type=int, default=2)
@@ -584,7 +591,7 @@ def main() -> None:
     args.out_dir.mkdir(parents=True, exist_ok=True)
     start = time.time()
 
-    task_ids = load_task_ids(args.curriculum_buffer, args.max_tasks, args.seed)
+    task_ids = load_task_ids(args.curriculum_buffer, args.max_tasks, args.seed, args.max_buffer_size)
     rows = []
     for task_id in task_ids:
         for idx in range(max(1, args.prompt_variants)):
@@ -660,7 +667,7 @@ def main() -> None:
                 reward_counter["count"] += 1
         step_counter["count"] += 1
         if args.dynamic_curriculum and reward_counter["count"] >= max(1, args.curriculum_update_every):
-            update_info = apply_feedback_to_buffer(args.curriculum_buffer, dict(reward_feedback), verbose=args.verbose)
+            update_info = apply_feedback_to_buffer(args.curriculum_buffer, dict(reward_feedback), verbose=args.verbose, max_buffer_size=args.max_buffer_size)
             reward_feedback.clear()
             reward_counter["count"] = 0
             curriculum_update_count["n"] += 1
@@ -705,7 +712,7 @@ def main() -> None:
         reward_mode=args.reward_mode,
     )
     if args.dynamic_curriculum and reward_feedback:
-        update_info = apply_feedback_to_buffer(args.curriculum_buffer, dict(reward_feedback), verbose=args.verbose)
+        update_info = apply_feedback_to_buffer(args.curriculum_buffer, dict(reward_feedback), verbose=args.verbose, max_buffer_size=args.max_buffer_size)
         if args.curriculum_evolve_iterations > 0:
             update_info.update(evolve_curriculum(args, verbose=args.verbose))
         curriculum_updates.append(update_info)

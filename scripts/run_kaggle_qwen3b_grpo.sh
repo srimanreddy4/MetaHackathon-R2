@@ -81,7 +81,7 @@ case "${MODE}" in
     run_train training_results/unsloth_grpo_qwen3b_kaggle 160 300 8 1024 768 192 32 100
     ;;
   easy-main)
-    EXTRA_ARGS=(--reward-mode easy --prompt-mode easy --prompt-variants 3)
+    EXTRA_ARGS=(--reward-mode easy --prompt-mode easy --prompt-variants 3 --max-buffer-size 12)
     run_train training_results/unsloth_grpo_qwen3b_easy 120 300 8 1280 768 256 32 50 "${EXTRA_ARGS[@]}"
     ;;
   react-generate)
