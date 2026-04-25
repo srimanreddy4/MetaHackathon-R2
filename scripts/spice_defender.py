@@ -11,7 +11,7 @@ import re
 from typing import Any
 
 from oncallenv import OnCallRedShiftEnv
-from oncallenv.core.tools import MUTATING_TOOLS, READ_ONLY_TOOLS
+from oncallenv.core.tools import MUTATING_TOOLS, READ_ONLY_TOOLS, ToolRuntime
 from oncallenv.core.types import Action, ScenarioSpec
 from oncallenv.simulation.scenario_compiler import compile_scenario
 
@@ -207,6 +207,7 @@ def defender_rollout_reward(
             obs = env.step(Action(command=f"submit_rca {build_rca(root_service, root_category)}"))
             max_reward = max(max_reward, float(obs.reward or 0.0))
 
-    format_bonus = 0.05 if "<actions>" in text.lower() and "</actions>" in text.lower() else 0.0
-    concise_bonus = 0.03 if 2 <= len(commands) <= 8 else 0.0
-    return max(-0.25, min(1.1, max_reward + format_bonus + concise_bonus))
+    raw_reward = max_reward + format_bonus + concise_bonus
+    # Shift and scale from [-0.25, 1.1] to [0.0, 1.0]
+    norm_reward = (raw_reward + 0.25) / 1.35
+    return max(0.0, min(1.0, norm_reward))

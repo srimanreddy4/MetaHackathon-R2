@@ -514,7 +514,7 @@ def main() -> None:
 
     # Self-play
     parser.add_argument("--selfplay-iterations", type=int, default=200)
-    parser.add_argument("--group-size", type=int, default=4, help="G: num_generations for GRPOTrainer (GRPO weight update)")
+    parser.add_argument("--group-size", type=int, default=6, help="G: num_generations for GRPOTrainer (GRPO weight update)")
     parser.add_argument("--selfplay-group-size", type=int, default=None,
                         help="Number of defender rollouts per attacker-generated scenario for variance reward. "
                              "Defaults to --group-size if not set.")
@@ -523,7 +523,7 @@ def main() -> None:
 
     # Training
     parser.add_argument("--max-steps", type=int, default=600)
-    parser.add_argument("--per-device-train-batch-size", type=int, default=4)
+    parser.add_argument("--per-device-train_batch_size", type=int, default=4)
     parser.add_argument("--gradient-accumulation-steps", type=int, default=2)
     parser.add_argument("--max-seq-length", type=int, default=1536)
     parser.add_argument("--max-prompt-length", type=int, default=1024)
@@ -696,9 +696,7 @@ def main() -> None:
 
     # Attacker rows → prompts for attacker role
     for row in all_attacker_data:
-        spec = next((s for s in parent_specs if s.task_id == row["parent"]), None)
-        if spec is None:
-            continue
+        spec = next((s for s in parent_specs if s.task_id == row["parent"]), parent_specs[0])
         train_rows.append({
             "prompt": [{"role": "user", "content": build_attacker_prompt(spec)}],
             "role": "attacker",
@@ -781,19 +779,20 @@ def main() -> None:
                 r_val = args.challenger_penalty * 0.5 if "set_field" in text.lower() or "<actions>" in text.lower() else args.challenger_penalty
                 rewards.append(r_val)
                 continue
-            # Heuristic complexity proxy
+            # Heuristic complexity proxy - aligned with Gaussian on p intent
+            # We reward "medium-high" complexity scenarios as they are more likely to have p=0.5
             c = 0.0
             if spec.fault_secondary:
-                c += 0.3
+                c += 0.25
             if spec.red_herring and spec.red_herring != "none":
                 c += 0.2
             if spec.schema_drift and spec.schema_drift != "none":
                 c += 0.2
-            if spec.metric_noise > 0.3:
+            if 0.4 <= spec.metric_noise <= 0.8:
                 c += 0.15
-            if spec.blast_radius > 0.5:
-                c += 0.15
-            rewards.append(min(1.0, 0.3 + c))
+            if 0.4 <= spec.blast_radius <= 0.8:
+                c += 0.2
+            rewards.append(min(1.0, 0.2 + c))
         return rewards
 
     def defender_reward(completions, **kwargs):

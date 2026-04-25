@@ -199,37 +199,33 @@ def parse_attacker_actions(
 # Reward
 # ---------------------------------------------------------------------------
 
-DEFENDER_REWARD_MIN = -0.25
-DEFENDER_REWARD_MAX = 1.1
-DEFENDER_REWARD_RANGE = DEFENDER_REWARD_MAX - DEFENDER_REWARD_MIN
+DEFENDER_REWARD_MIN = 0.0
+DEFENDER_REWARD_MAX = 1.0
+DEFENDER_REWARD_RANGE = 1.0
 
 
 def normalize_defender_reward(r: float) -> float:
-    """Map raw defender reward [-0.25, 1.1] → [0, 1]."""
-    return max(0.0, min(1.0, (r - DEFENDER_REWARD_MIN) / DEFENDER_REWARD_RANGE))
+    """Clip defender reward to [0, 1]."""
+    return max(0.0, min(1.0, r))
 
 
 def attacker_reward(
     defender_rewards: list[float],
     penalty: float = -0.1,
-    tau: float = 0.01,
+    threshold: float = 0.45,
+    tau: float = 0.05,
 ) -> float:
-    """Gaussian variance-based reward for the Attacker.
+    """Gaussian binary-pass-rate reward for the Attacker.
 
-    Peaks at 1.0 when the variance of normalised defender rewards is
-    maximised (diverse outcomes = scenario at the learning frontier).
+    Peaks at 1.0 when the pass rate p is 0.5 (maximum uncertainty/learning frontier).
     """
     if not defender_rewards:
         return penalty
 
-    normalized = [normalize_defender_reward(r) for r in defender_rewards]
+    # Binarize based on threshold
+    passes = [1.0 if r >= threshold else 0.0 for r in defender_rewards]
+    p = sum(passes) / len(passes)
 
-    if len(normalized) < 2:
-        return penalty
-
-    var = statistics.pvariance(normalized)
-    # Target variance: for [0, 1] values the maximum variance is 0.25
-    # (half the group at 0, half at 1).  We use 0.25 as the peak target.
-    target_var = 0.25
-    reward = math.exp(-((var - target_var) ** 2) / (2 * tau))
+    # Gaussian centered at p=0.5
+    reward = math.exp(-((p - 0.5) ** 2) / (2 * tau))
     return reward

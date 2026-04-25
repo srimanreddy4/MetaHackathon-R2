@@ -132,14 +132,13 @@ set_field blast_radius 0.8
 
 class TestNormalizeDefenderReward:
     def test_min_maps_to_zero(self):
-        assert normalize_defender_reward(-0.25) == pytest.approx(0.0)
+        assert normalize_defender_reward(0.0) == pytest.approx(0.0)
 
     def test_max_maps_to_one(self):
-        assert normalize_defender_reward(1.1) == pytest.approx(1.0)
+        assert normalize_defender_reward(1.0) == pytest.approx(1.0)
 
-    def test_zero_maps_to_middle(self):
-        v = normalize_defender_reward(0.0)
-        assert 0.0 < v < 1.0
+    def test_zero_maps_to_zero(self):
+        assert normalize_defender_reward(0.0) == 0.0
 
     def test_clips_below_min(self):
         assert normalize_defender_reward(-1.0) == 0.0
@@ -149,23 +148,27 @@ class TestNormalizeDefenderReward:
 
 
 class TestAttackerReward:
-    def test_high_variance_gets_high_reward(self):
-        # Half pass, half fail → variance ≈ 0.25 → peak reward
-        rewards = [1.1, 1.1, -0.25, -0.25]
+    def test_half_pass_gets_high_reward(self):
+        # 2 pass, 2 fail -> p=0.5 -> peak reward
+        # Threshold is 0.45
+        rewards = [0.8, 0.9, 0.1, 0.2]
         r = attacker_reward(rewards)
         assert r > 0.9
 
-    def test_all_same_gets_low_reward(self):
-        # All identical → variance = 0 → far from 0.25
-        rewards = [0.5, 0.5, 0.5, 0.5]
+    def test_all_pass_gets_low_reward(self):
+        # p=1.0 -> far from 0.5
+        rewards = [0.8, 0.9, 1.0, 0.7]
+        r = attacker_reward(rewards)
+        assert r < 0.2
+
+    def test_all_fail_gets_low_reward(self):
+        # p=0.0 -> far from 0.5
+        rewards = [0.1, 0.2, 0.3, 0.4]
         r = attacker_reward(rewards)
         assert r < 0.2
 
     def test_empty_rewards_returns_penalty(self):
         assert attacker_reward([]) == -0.1
-
-    def test_single_reward_returns_penalty(self):
-        assert attacker_reward([0.5]) == -0.1
 
     def test_reward_is_between_zero_and_one(self):
         rewards = [0.0, 0.5, 1.0, 0.3]
