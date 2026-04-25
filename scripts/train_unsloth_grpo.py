@@ -22,6 +22,10 @@ from oncallenv import OnCallRedShiftEnv
 from oncallenv.core.tools import MUTATING_TOOLS, READ_ONLY_TOOLS
 from oncallenv.core.types import Action
 from oncallenv.curriculum import RegretBuffer
+from oncallenv.rewards.sre_shaped import (
+    build_sre_prompt,
+    sre_shaped_reward,
+)
 
 
 SERVICES = [
@@ -119,6 +123,13 @@ def build_prompt(
     prompt_mode: str,
     template: str,
 ) -> str:
+    if prompt_mode == "sre":
+        return build_sre_prompt(
+            task_id=task_id,
+            alert_service=alert_service,
+            alert_message=alert_message,
+            services=list(services),
+        )
     base = f"""You are the on-call SRE for OnCallEnv Red Shift.
 
 Task id: {task_id}
@@ -296,6 +307,8 @@ def shaped_easy_reward(completion: Any, commands: list[str], env_reward: float, 
 
 def rollout_reward(task_id: str, completion: Any, root_service: str, root_category: str, required: list[str] | None = None, reward_mode: str = "hard") -> float:
     text = extract_completion_text(completion)
+    if reward_mode == "sre":
+        return float(sre_shaped_reward(text, task_id))
     commands = parse_commands(text)
     if not commands:
         return -0.25
@@ -438,8 +451,8 @@ def main() -> None:
     parser.add_argument("--beta", type=float, default=0.02)
     parser.add_argument("--scale-rewards", default="batch")
     parser.add_argument("--loss-type", default="dr_grpo")
-    parser.add_argument("--reward-mode", choices=["hard", "easy"], default="hard")
-    parser.add_argument("--prompt-mode", choices=["hard", "easy"], default="hard")
+    parser.add_argument("--reward-mode", choices=["hard", "easy", "sre"], default="hard")
+    parser.add_argument("--prompt-mode", choices=["hard", "easy", "sre"], default="hard")
     parser.add_argument("--prompt-variants", type=int, default=1)
     parser.add_argument("--logging-steps", type=int, default=5)
     parser.add_argument("--save-steps", type=int, default=100)
