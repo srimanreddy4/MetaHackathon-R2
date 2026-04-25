@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import random
 import time
 from pathlib import Path
 from typing import Any
@@ -74,6 +75,80 @@ class CommandDataCollator:
             batch["attention_mask"].append(feature["attention_mask"] + [0] * pad)
             batch["labels"].append(feature["labels"] + [-100] * pad)
         return {key: torch.tensor(value, dtype=torch.long) for key, value in batch.items()}
+
+
+def save_checkpoint(model, tokenizer, out_dir: Path, step: int, log_history: list[dict[str, Any]]) -> None:
+    checkpoint = out_dir / f"checkpoint-{step}"
+    checkpoint.mkdir(parents=True, exist_ok=True)
+    model.save_pretrained(checkpoint)
+    tokenizer.save_pretrained(checkpoint)
+    (checkpoint / "trainer_state.json").write_text(
+        json.dumps({"global_step": step, "max_steps": None, "log_history": log_history}, indent=2),
+        encoding="utf-8",
+    )
+
+
+def manual_sft_train(model, tokenizer, train_dataset, data_collator, args) -> list[dict[str, Any]]:
+    import torch
+
+    features = [train_dataset[index] for index in range(len(train_dataset))]
+    if not features:
+        raise ValueError("ReAct SFT train dataset is empty")
+
+    optimizer = torch.optim.AdamW((parameter for parameter in model.parameters() if parameter.requires_grad), lr=args.lr)
+    rng = random.Random(args.seed)
+    model.train()
+    if hasattr(model, "config"):
+        model.config.use_cache = False
+    optimizer.zero_grad(set_to_none=True)
+
+    micro_step = 0
+    global_step = 0
+    log_history: list[dict[str, Any]] = []
+    running_losses: list[float] = []
+    epoch = 0
+    order = list(range(len(features)))
+    rng.shuffle(order)
+
+    while global_step < args.max_steps:
+        batch_features = []
+        for _ in range(args.per_device_train_batch_size):
+            if micro_step >= len(order):
+                micro_step = 0
+                epoch += 1
+                rng.shuffle(order)
+            batch_features.append(features[order[micro_step]])
+            micro_step += 1
+        batch = data_collator(batch_features)
+        batch = {key: value.to(model.device) for key, value in batch.items()}
+        outputs = model(**batch)
+        raw_loss = outputs.loss
+        loss = raw_loss / args.gradient_accumulation_steps
+        loss.backward()
+        running_losses.append(float(raw_loss.detach().cpu()))
+
+        if len(running_losses) % args.gradient_accumulation_steps == 0:
+            grad_norm = torch.nn.utils.clip_grad_norm_(
+                [parameter for parameter in model.parameters() if parameter.requires_grad],
+                max_norm=1.0,
+            )
+            optimizer.step()
+            optimizer.zero_grad(set_to_none=True)
+            global_step += 1
+
+            if global_step % args.logging_steps == 0 or global_step == 1:
+                row = {
+                    "step": global_step,
+                    "loss": sum(running_losses[-args.gradient_accumulation_steps:]) / args.gradient_accumulation_steps,
+                    "grad_norm": float(grad_norm.detach().cpu()) if hasattr(grad_norm, "detach") else float(grad_norm),
+                    "epoch": epoch + micro_step / max(1, len(features)),
+                }
+                log_history.append(row)
+                print(json.dumps(row), flush=True)
+            if global_step % args.save_steps == 0 or global_step == args.max_steps:
+                save_checkpoint(model, tokenizer, args.out_dir, global_step, log_history)
+
+    return log_history
 
 
 def model_command_fn(model, tokenizer, *, max_seq_length: int, max_new_tokens: int):
@@ -220,7 +295,6 @@ def main() -> None:
     write_jsonl(dataset_path, rows)
     (args.out_dir / "trajectory_metadata.json").write_text(json.dumps(metadata, indent=2), encoding="utf-8")
 
-    from transformers import Trainer, TrainingArguments
     from unsloth import FastLanguageModel
 
     model, tokenizer = FastLanguageModel.from_pretrained(
@@ -267,32 +341,8 @@ def main() -> None:
     train_rows = [row for row in rows if row["split"] == "train"]
     eval_rows = [row for row in rows if row["split"] == "eval"]
     train_dataset = tokenize_dataset(tokenizer, train_rows, args.max_seq_length)
-    eval_dataset = tokenize_dataset(tokenizer, eval_rows[: min(len(eval_rows), args.eval_action_rows)], args.max_seq_length)
     data_collator = CommandDataCollator(tokenizer)
-
-    training_args = TrainingArguments(
-        output_dir=str(args.out_dir),
-        per_device_train_batch_size=args.per_device_train_batch_size,
-        gradient_accumulation_steps=args.gradient_accumulation_steps,
-        max_steps=args.max_steps,
-        learning_rate=args.lr,
-        logging_steps=args.logging_steps,
-        save_steps=args.save_steps,
-        report_to=[],
-        fp16=True,
-        bf16=False,
-        seed=args.seed,
-        remove_unused_columns=False,
-    )
-    trainer = Trainer(
-        model=model,
-        args=training_args,
-        train_dataset=train_dataset,
-        eval_dataset=eval_dataset,
-        data_collator=data_collator,
-        tokenizer=tokenizer,
-    )
-    trainer.train()
+    log_history = manual_sft_train(model, tokenizer, train_dataset, data_collator, args)
 
     adapter_dir = args.out_dir / "adapter"
     model.save_pretrained(adapter_dir)
@@ -334,7 +384,7 @@ def main() -> None:
         "adapter_dir": str(adapter_dir),
         "trainable_parameter_report": trainable_report,
     }
-    summary["plots"] = plot_training(trainer.state.log_history, summary, Path("docs/plots"), "react_sft_qwen3b")
+    summary["plots"] = plot_training(log_history, summary, Path("docs/plots"), "react_sft_qwen3b")
     (args.out_dir / "summary.json").write_text(json.dumps(summary, indent=2), encoding="utf-8")
     print(json.dumps(summary, indent=2), flush=True)
 
