@@ -397,7 +397,7 @@ def make_grpo_config(args):
         "scale_rewards": args.scale_rewards,
         "loss_type": args.loss_type,
         "use_vllm": False,
-        "log_completions": True,
+        "log_completions": False,
         "log_on_each_node": True,
         "disable_tqdm": False,
     }.items():
