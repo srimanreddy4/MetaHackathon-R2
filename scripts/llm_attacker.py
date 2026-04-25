@@ -86,21 +86,19 @@ Below is the current parent scenario YAML:
 {parent_yaml}
 ```
 
-You may mutate the scenario by issuing one or more `set_field` commands.
+You are a strict code execution agent. You may mutate the scenario by issuing one or more `set_field` commands.
 Each command changes a single field to a new valid value.
 
 Valid fields and their allowed values:
 {_FIELD_DOC}
 
-Rules:
-- Output your commands inside <actions> ... </actions> tags.
-- One command per line: `set_field FIELD_NAME VALUE`
-- You may issue 1 to 5 set_field commands.
-- Choose mutations that make the scenario harder but still solvable.
-- Think about which fault combinations, topologies, and red herrings
-  would challenge an SRE defender the most.
+STRICT RULES:
+1. You MUST output ONLY the commands inside <actions> and </actions> tags.
+2. DO NOT write ANY conversational text or markdown blocks outside the tags.
+3. One command per line: `set_field FIELD_NAME VALUE`.
+4. You may issue 1 to 5 set_field commands.
 
-Example output:
+Example Output:
 <actions>
 set_field fault_primary deadlock
 set_field topology mesh

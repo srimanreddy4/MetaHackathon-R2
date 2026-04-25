@@ -60,9 +60,20 @@ Critical alert: {service} reports {alert_msg}
 Available services: {", ".join(sorted(graph.services))}
 Available tools: kubectl_logs, promql_query, jaeger_search, kubectl_describe_pod, kubectl_top, dns_lookup, check_deploy_history, curl_service, istioctl_routes, kubectl_rollout_restart, kubectl_rollout_undo, kubectl_scale, feature_flag_toggle, traffic_split_update, kubectl_apply_config, declare_resolved
 
-Return only a short action plan.  Put one simulator command per line inside:
+You are a strict code execution agent. You must output a sequence of commands to solve the incident.
+
+STRICT RULES:
+1. You MUST output ONLY the commands inside <actions> and </actions> tags.
+2. DO NOT write ANY conversational text or markdown blocks outside the tags.
+3. Put exactly ONE simulator command per line.
+4. Use the provided tools and services to diagnose and remediate, ending with declare_resolved.
+
+Example Output:
 <actions>
-...
+promql_query {service}
+kubectl_logs {service}
+kubectl_rollout_undo {service}
+declare_resolved
 </actions>
 
 Use real commands such as kubectl_logs SERVICE, promql_query SERVICE,
@@ -70,7 +81,6 @@ jaeger_search SERVICE, kubectl_rollout_restart SERVICE,
 kubectl_rollout_undo SERVICE, kubectl_scale SERVICE,
 feature_flag_toggle SERVICE, traffic_split_update SERVICE,
 kubectl_apply_config SERVICE, and declare_resolved.
-Do not include prose outside the tags.
 """
 
 
