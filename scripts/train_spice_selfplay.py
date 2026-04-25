@@ -23,6 +23,7 @@ from typing import Any
 
 import torch
 import yaml
+from transformers import TrainerCallback
 
 from oncallenv.core.types import ScenarioSpec
 from oncallenv.simulation.scenario_compiler import compile_scenario
@@ -700,62 +701,85 @@ def main() -> None:
     # 6. GRPOTrainer (DrGRPO)
     # ------------------------------------------------------------------
 
-    def selfplay_reward(completions, **kwargs):
-        """Unified reward function dispatching to attacker or defender."""
-        # TRL passes prompts and custom columns as kwargs
+    # --- Shared helper to resolve per-item values from kwargs ---
+    def _get(kwargs, key, idx):
+        v = kwargs.get(key, [""])
+        return v[idx] if isinstance(v, list) else v
+
+    def attacker_reward(completions, **kwargs):
+        """Attacker reward: heuristic complexity of generated scenario.
+        Returns challenger_penalty for defender-role rows (masked out).
+        """
         role = kwargs.get("role")
-        # Handle case where role might be a list (one per completion) or a single value
-        # TRL usually passes the batch-item value for custom columns
         rewards = []
         for idx, completion in enumerate(completions):
-            text = completion if isinstance(completion, str) else str(completion)
             r_val = role[idx] if isinstance(role, list) else role
-
-            if r_val == "attacker":
-                pid_list = kwargs.get("parent_task_id", [""])
-                pid = pid_list[idx] if isinstance(pid_list, list) else pid_list
-                parent = next((s for s in parent_specs if s.task_id == pid), parent_specs[0])
-                spec, is_valid, _ = parse_attacker_actions(text, parent)
-                if not is_valid or spec is None:
-                    rewards.append(args.challenger_penalty)
-                    continue
-                try:
-                    compile_scenario(spec)
-                except Exception:
-                    rewards.append(args.challenger_penalty)
-                    continue
-                # Heuristic complexity proxy
-                c = 0.0
-                if spec.fault_secondary:
-                    c += 0.3
-                if spec.red_herring and spec.red_herring != "none":
-                    c += 0.2
-                if spec.schema_drift and spec.schema_drift != "none":
-                    c += 0.2
-                if spec.metric_noise > 0.3:
-                    c += 0.15
-                if spec.blast_radius > 0.5:
-                    c += 0.15
-                rewards.append(min(1.0, 0.3 + c))
-            else:
-                tid_list = kwargs.get("task_id", [""])
-                tid = tid_list[idx] if isinstance(tid_list, list) else tid_list
-                spec = next((s for s in parent_specs if s.task_id == tid), parent_specs[0])
-                try:
-                    r = defender_rollout_reward(spec, text)
-                except Exception:
-                    r = -0.25
-                rewards.append(normalize_defender_reward(r))
-
+            if r_val != "attacker":
+                rewards.append(0.0)  # neutral mask for defender rows
+                continue
+            text = completion if isinstance(completion, str) else str(completion)
+            pid = _get(kwargs, "parent_task_id", idx)
+            parent = next((s for s in parent_specs if s.task_id == pid), parent_specs[0])
+            spec, is_valid, _ = parse_attacker_actions(text, parent)
+            if not is_valid or spec is None:
+                rewards.append(args.challenger_penalty)
+                continue
+            try:
+                compile_scenario(spec)
+            except Exception:
+                rewards.append(args.challenger_penalty)
+                continue
+            # Heuristic complexity proxy
+            c = 0.0
+            if spec.fault_secondary:
+                c += 0.3
+            if spec.red_herring and spec.red_herring != "none":
+                c += 0.2
+            if spec.schema_drift and spec.schema_drift != "none":
+                c += 0.2
+            if spec.metric_noise > 0.3:
+                c += 0.15
+            if spec.blast_radius > 0.5:
+                c += 0.15
+            rewards.append(min(1.0, 0.3 + c))
         return rewards
+
+    def defender_reward(completions, **kwargs):
+        """Defender reward: normalised simulator rubric score.
+        Returns 0.0 for attacker-role rows (masked out).
+        """
+        role = kwargs.get("role")
+        rewards = []
+        for idx, completion in enumerate(completions):
+            r_val = role[idx] if isinstance(role, list) else role
+            if r_val != "defender":
+                rewards.append(0.0)  # neutral mask for attacker rows
+                continue
+            text = completion if isinstance(completion, str) else str(completion)
+            tid = _get(kwargs, "task_id", idx)
+            spec = next((s for s in parent_specs if s.task_id == tid), parent_specs[0])
+            try:
+                r = defender_rollout_reward(spec, text)
+            except Exception:
+                r = -0.25
+            rewards.append(normalize_defender_reward(r))
+        return rewards
+
+    # --- Callback: prints the same log dict as train_unsloth_grpo.py ---
+
+    class SpiceLogCallback(TrainerCallback):
+        def on_log(self, train_args, state, control, logs=None, **cb_kwargs):
+            if logs:
+                print(logs)
 
     train_dataset = Dataset.from_list(train_rows)
     training_args = make_grpo_config(args)
     trainer_kwargs: dict[str, Any] = {
         "model": model,
-        "reward_funcs": selfplay_reward,
+        "reward_funcs": [attacker_reward, defender_reward],
         "args": training_args,
         "train_dataset": train_dataset,
+        "callbacks": [SpiceLogCallback()],
     }
     trainer_params = inspect.signature(GRPOTrainer.__init__).parameters
     if "processing_class" in trainer_params:
