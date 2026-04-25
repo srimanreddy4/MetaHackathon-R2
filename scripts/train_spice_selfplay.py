@@ -74,18 +74,19 @@ def generate_text(
     """Generate one or more completions from the LoRA model."""
     inputs = tokenizer(prompt, return_tensors="pt").to(model.device)
     outputs: list[str] = []
-    for _ in range(num_return):
-        with torch.no_grad():
-            ids = model.generate(
-                **inputs,
-                max_new_tokens=max_new_tokens,
-                do_sample=temperature > 0,
-                temperature=max(temperature, 1e-4),
-                top_p=0.95,
-                pad_token_id=tokenizer.eos_token_id,
-            )
+    with torch.no_grad():
+        ids = model.generate(
+            **inputs,
+            max_new_tokens=max_new_tokens,
+            do_sample=temperature > 0,
+            temperature=max(temperature, 1e-4),
+            top_p=0.95,
+            pad_token_id=tokenizer.eos_token_id,
+            num_return_sequences=num_return,
+        )
+    for sequence_ids in ids:
         text = tokenizer.decode(
-            ids[0][inputs["input_ids"].shape[-1]:], skip_special_tokens=True,
+            sequence_ids[inputs["input_ids"].shape[-1]:], skip_special_tokens=True,
         )
         outputs.append(text)
     return outputs
