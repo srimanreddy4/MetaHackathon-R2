@@ -144,6 +144,18 @@ case "${MODE}" in
     ls -lh /kaggle/working/easy_grpo_qwen3b_artifacts.tar.gz
     echo "Download from Kaggle: /kaggle/working/easy_grpo_qwen3b_artifacts.tar.gz"
     ;;
+  copy-easy-artifacts)
+    archive="/kaggle/working/easy_grpo_qwen3b_artifacts.tar.gz"
+    dest="artifacts/models/easy_grpo_qwen3b_artifacts.tar.gz"
+    if [[ ! -f "${archive}" ]]; then
+      echo "Missing ${archive}. Run export-easy-artifacts first." >&2
+      exit 1
+    fi
+    mkdir -p artifacts/models
+    cp "${archive}" "${dest}"
+    ls -lh "${archive}" "${dest}"
+    echo "Copied archive into repo artifact folder: ${dest}"
+    ;;
   summary)
     python scripts/summarize_unsloth_grpo.py training_results/unsloth_grpo_qwen3b_kaggle
     ;;
@@ -181,6 +193,7 @@ Usage:
   bash scripts/run_kaggle_qwen3b_grpo.sh easy-summary
   bash scripts/run_kaggle_qwen3b_grpo.sh easy-eval-checkpoint
   bash scripts/run_kaggle_qwen3b_grpo.sh export-easy-artifacts
+  bash scripts/run_kaggle_qwen3b_grpo.sh copy-easy-artifacts
   bash scripts/run_kaggle_qwen3b_grpo.sh archive
 EOF
     exit 2
