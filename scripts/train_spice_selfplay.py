@@ -704,6 +704,7 @@ def main() -> None:
             "role": "attacker",
             "parent_task_id": row["parent"],
             "task_id": row.get("child_task_id", ""),
+            "spec": None,  # Ensure consistent schema
             "root_service": "",
             "root_category": "",
         })
@@ -743,28 +744,27 @@ def main() -> None:
 
     # --- Shared helper to resolve per-item values from kwargs ---
     def _get(kwargs, key, idx):
-        v = kwargs.get(key, [""])
+        v = kwargs[key]
         return v[idx] if isinstance(v, list) else v
 
     def attacker_reward(completions, **kwargs):
         """Attacker reward: heuristic complexity of generated scenario.
         Returns challenger_penalty for defender-role rows (masked out).
         """
-        role = kwargs.get("role")
         rewards = []
-        
         comps_list = list(completions)
-        if getattr(args, "verbose", False) and comps_list and role and role[0] == "attacker":
+        r_sample = _get(kwargs, "role", 0)
+        if getattr(args, "verbose", False) and comps_list and r_sample == "attacker":
             print(f"\n[VERBOSE] Attacker Sample:\n{comps_list[0]}\n{'-'*40}\n")
             
         for idx, completion in enumerate(comps_list):
-            r_val = role[idx] if isinstance(role, list) else role
+            r_val = _get(kwargs, "role", idx)
             if r_val != "attacker":
                 rewards.append(0.0)  # neutral mask for defender rows
                 continue
             text = completion if isinstance(completion, str) else str(completion)
             pid = _get(kwargs, "parent_task_id", idx)
-            parent = next((s for s in parent_specs if s.task_id == pid), parent_specs[0])
+            parent = next(s for s in parent_specs if s.task_id == pid)
             spec, is_valid, _ = parse_attacker_actions(text, parent)
             if not is_valid or spec is None:
                 r_val = args.challenger_penalty * 0.5 if "set_field" in text.lower() or "<actions>" in text.lower() else args.challenger_penalty
@@ -795,25 +795,21 @@ def main() -> None:
         """Defender reward: normalised simulator rubric score.
         Returns 0.0 for attacker-role rows (masked out).
         """
-        role = kwargs.get("role")
         rewards = []
-
         comps_list = list(completions)
-        if getattr(args, "verbose", False) and comps_list and role and role[0] == "defender":
+        
+        r_sample = _get(kwargs, "role", 0)
+        if getattr(args, "verbose", False) and comps_list and r_sample == "defender":
             print(f"\n[VERBOSE] Defender Sample:\n{comps_list[0]}\n{'-'*40}\n")
             
         for idx, completion in enumerate(comps_list):
-            r_val = role[idx] if isinstance(role, list) else role
+            r_val = _get(kwargs, "role", idx)
             if r_val != "defender":
                 rewards.append(0.0)  # neutral mask for attacker rows
                 continue
             text = completion if isinstance(completion, str) else str(completion)
             spec_dict = _get(kwargs, "spec", idx)
-            if spec_dict:
-                spec = ScenarioSpec.model_validate(spec_dict)
-            else:
-                tid = _get(kwargs, "task_id", idx)
-                spec = next((s for s in parent_specs if s.task_id == tid), parent_specs[0])
+            spec = ScenarioSpec.model_validate(spec_dict)
             try:
                 r = defender_rollout_reward(spec, text)
             except Exception:
