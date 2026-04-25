@@ -485,7 +485,10 @@ def main() -> None:
 
     # Self-play
     parser.add_argument("--selfplay-iterations", type=int, default=200)
-    parser.add_argument("--group-size", type=int, default=4, help="G: completions per prompt per role")
+    parser.add_argument("--group-size", type=int, default=4, help="G: num_generations for GRPOTrainer (GRPO weight update)")
+    parser.add_argument("--selfplay-group-size", type=int, default=None,
+                        help="Number of defender rollouts per attacker-generated scenario for variance reward. "
+                             "Defaults to --group-size if not set.")
     parser.add_argument("--batch-size", type=int, default=8, help="Parent scenarios per iteration")
     parser.add_argument("--challenger-penalty", type=float, default=-0.1)
 
@@ -515,6 +518,9 @@ def main() -> None:
     parser.add_argument("--seed", type=int, default=20260424)
 
     args = parser.parse_args()
+    # Default selfplay_group_size to group_size if not explicitly set
+    if args.selfplay_group_size is None:
+        args.selfplay_group_size = args.group_size
 
     os.environ.setdefault("WANDB_DISABLED", "true")
     os.environ.setdefault("TOKENIZERS_PARALLELISM", "false")
@@ -604,7 +610,7 @@ def main() -> None:
             model=model,
             tokenizer=tokenizer,
             parent_specs=batch,
-            group_size=args.group_size,
+            group_size=args.selfplay_group_size,
             generation=iteration,
             temperature=args.temperature,
             max_attacker_tokens=args.max_attacker_tokens,
@@ -694,15 +700,20 @@ def main() -> None:
     # 6. GRPOTrainer (DrGRPO)
     # ------------------------------------------------------------------
 
-    def selfplay_reward(completions, prompt, role, **kwargs):
+    def selfplay_reward(completions, **kwargs):
         """Unified reward function dispatching to attacker or defender."""
+        # TRL passes prompts and custom columns as kwargs
+        role = kwargs.get("role")
+        # Handle case where role might be a list (one per completion) or a single value
+        # TRL usually passes the batch-item value for custom columns
         rewards = []
         for idx, completion in enumerate(completions):
             text = completion if isinstance(completion, str) else str(completion)
             r_val = role[idx] if isinstance(role, list) else role
 
             if r_val == "attacker":
-                pid = kwargs.get("parent_task_id", [""])[idx] if isinstance(kwargs.get("parent_task_id"), list) else kwargs.get("parent_task_id", "")
+                pid_list = kwargs.get("parent_task_id", [""])
+                pid = pid_list[idx] if isinstance(pid_list, list) else pid_list
                 parent = next((s for s in parent_specs if s.task_id == pid), parent_specs[0])
                 spec, is_valid, _ = parse_attacker_actions(text, parent)
                 if not is_valid or spec is None:
@@ -713,7 +724,7 @@ def main() -> None:
                 except Exception:
                     rewards.append(args.challenger_penalty)
                     continue
-                # Heuristic complexity proxy (full defender rollouts too slow in TRL loop)
+                # Heuristic complexity proxy
                 c = 0.0
                 if spec.fault_secondary:
                     c += 0.3
@@ -727,7 +738,8 @@ def main() -> None:
                     c += 0.15
                 rewards.append(min(1.0, 0.3 + c))
             else:
-                tid = kwargs.get("task_id", [""])[idx] if isinstance(kwargs.get("task_id"), list) else kwargs.get("task_id", "")
+                tid_list = kwargs.get("task_id", [""])
+                tid = tid_list[idx] if isinstance(tid_list, list) else tid_list
                 spec = next((s for s in parent_specs if s.task_id == tid), parent_specs[0])
                 try:
                     r = defender_rollout_reward(spec, text)
@@ -771,6 +783,7 @@ def main() -> None:
         "duration_sec": time.time() - start,
         "selfplay_iterations": args.selfplay_iterations,
         "group_size": args.group_size,
+        "selfplay_group_size": args.selfplay_group_size,
         "batch_size": args.batch_size,
         "max_steps": args.max_steps,
         "num_parent_specs": len(parent_specs),
