@@ -66,14 +66,20 @@ SEED_TASKS = [
 def generate_text(
     model,
     tokenizer,
-    prompt: str,
+    prompt,
     max_new_tokens: int,
     temperature: float,
     num_return: int = 1,
 ) -> list[str]:
-    """Generate one or more completions from the LoRA model."""
-    inputs = tokenizer(prompt, return_tensors="pt").to(model.device)
-    outputs: list[str] = []
+    """Generate one or more completions from the LoRA model IN PARALLEL."""
+    if isinstance(prompt, str):
+        prompt = [prompt]
+        
+    old_padding_side = tokenizer.padding_side
+    tokenizer.padding_side = "left"
+    inputs = tokenizer(prompt, return_tensors="pt", padding=True).to(model.device)
+    tokenizer.padding_side = old_padding_side
+    
     with torch.no_grad():
         ids = model.generate(
             **inputs,
@@ -84,9 +90,13 @@ def generate_text(
             pad_token_id=tokenizer.eos_token_id,
             num_return_sequences=num_return,
         )
-    for sequence_ids in ids:
+        
+    outputs: list[str] = []
+    for i, sequence_ids in enumerate(ids):
+        prompt_idx = i // num_return
+        input_len = inputs["input_ids"][prompt_idx].shape[-1]
         text = tokenizer.decode(
-            sequence_ids[inputs["input_ids"].shape[-1]:], skip_special_tokens=True,
+            sequence_ids[input_len:], skip_special_tokens=True,
         )
         outputs.append(text)
     return outputs
@@ -117,16 +127,21 @@ def selfplay_iteration(
     valid_specs: list[ScenarioSpec] = []
 
     # === ATTACKER PHASE ===
-    for parent in parent_specs:
-        prompt = build_attacker_prompt(parent)
-        completions = generate_text(
-            model, tokenizer, prompt,
-            max_new_tokens=max_attacker_tokens,
-            temperature=temperature,
-            num_return=group_size,
-        )
-
-        for i, completion in enumerate(completions):
+    attacker_prompts = [build_attacker_prompt(p) for p in parent_specs]
+    
+    all_attacker_completions = generate_text(
+        model, tokenizer, attacker_prompts,
+        max_new_tokens=max_attacker_tokens,
+        temperature=temperature,
+        num_return=group_size,
+    )
+    
+    defender_rollout_requests = []
+    
+    for i, parent in enumerate(parent_specs):
+        completions = all_attacker_completions[i * group_size : (i + 1) * group_size]
+        
+        for completion in completions:
             spec, is_valid, actions = parse_attacker_actions(
                 completion, parent, generation=generation,
             )
@@ -141,7 +156,6 @@ def selfplay_iteration(
                 })
                 continue
 
-            # Validate that the scenario compiles
             try:
                 compile_scenario(spec)
             except Exception:
@@ -153,24 +167,31 @@ def selfplay_iteration(
                     "reward": challenger_penalty,
                 })
                 continue
-
-            # Run G defender rollouts to compute attacker reward
-            defender_prompt = build_defender_prompt(spec)
-            defender_completions = generate_text(
-                model, tokenizer, defender_prompt,
-                max_new_tokens=max_defender_tokens,
-                temperature=temperature,
-                num_return=group_size,
-            )
-
+                
+            defender_rollout_requests.append((parent, spec, completion, actions))
+            valid_specs.append(spec)
+            
+    if defender_rollout_requests:
+        defender_prompts = [build_defender_prompt(req[1]) for req in defender_rollout_requests]
+        all_defender_completions = generate_text(
+            model, tokenizer, defender_prompts,
+            max_new_tokens=max_defender_tokens,
+            temperature=temperature,
+            num_return=group_size,
+        )
+        
+        for i, req in enumerate(defender_rollout_requests):
+            parent, spec, completion, actions = req
+            d_comps = all_defender_completions[i * group_size : (i + 1) * group_size]
+            
             defender_rewards = []
-            for d_comp in defender_completions:
+            for d_comp in d_comps:
                 try:
                     r = defender_rollout_reward(spec, d_comp)
                 except Exception:
                     r = -0.25
                 defender_rewards.append(r)
-
+                
             a_reward = attacker_reward(defender_rewards, penalty=challenger_penalty)
             attacker_rows.append({
                 "parent": parent.task_id,
@@ -181,38 +202,38 @@ def selfplay_iteration(
                 "defender_rewards": defender_rewards,
                 "reward": a_reward,
             })
-            valid_specs.append(spec)
 
     # === DEFENDER PHASE ===
-    # Pick valid attacker-generated scenarios for Defender training
     if valid_specs:
         rng = random.Random(generation)
         selected = rng.sample(valid_specs, min(len(valid_specs), len(parent_specs)))
     else:
-        # Fallback to parent specs if attacker produced nothing valid
         selected = parent_specs
 
-    for spec in selected:
-        defender_prompt = build_defender_prompt(spec)
-        defender_completions = generate_text(
-            model, tokenizer, defender_prompt,
+    if selected:
+        final_defender_prompts = [build_defender_prompt(spec) for spec in selected]
+        all_final_defender_completions = generate_text(
+            model, tokenizer, final_defender_prompts,
             max_new_tokens=max_defender_tokens,
             temperature=temperature,
             num_return=group_size,
         )
-        for d_comp in defender_completions:
-            try:
-                r = defender_rollout_reward(spec, d_comp)
-            except Exception:
-                r = -0.25
-            norm_r = normalize_defender_reward(r)
-            defender_rows.append({
-                "task_id": spec.task_id,
-                "completion": d_comp,
-                "commands": parse_commands(d_comp),
-                "raw_reward": r,
-                "reward": norm_r,
-            })
+        
+        for i, spec in enumerate(selected):
+            d_comps = all_final_defender_completions[i * group_size : (i + 1) * group_size]
+            for d_comp in d_comps:
+                try:
+                    r = defender_rollout_reward(spec, d_comp)
+                except Exception:
+                    r = -0.25
+                norm_r = normalize_defender_reward(r)
+                defender_rows.append({
+                    "task_id": spec.task_id,
+                    "completion": d_comp,
+                    "commands": parse_commands(d_comp),
+                    "raw_reward": r,
+                    "reward": norm_r,
+                })
 
     return {
         "attacker_rows": attacker_rows,
