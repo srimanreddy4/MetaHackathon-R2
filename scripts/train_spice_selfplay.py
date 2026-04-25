@@ -779,7 +779,6 @@ def main() -> None:
         "reward_funcs": [attacker_reward, defender_reward],
         "args": training_args,
         "train_dataset": train_dataset,
-        "callbacks": [SpiceLogCallback()],
     }
     trainer_params = inspect.signature(GRPOTrainer.__init__).parameters
     if "processing_class" in trainer_params:
@@ -787,6 +786,12 @@ def main() -> None:
     else:
         trainer_kwargs["tokenizer"] = tokenizer
     trainer = GRPOTrainer(**trainer_kwargs)
+    # Add callback after construction so Unsloth's patched trainer
+    # doesn't swallow it during its own __init__ compilation phase.
+    trainer.add_callback(SpiceLogCallback())
+    # Ensure TRL's built-in step logs reach stdout even in notebook cells.
+    import transformers as _tf
+    _tf.logging.set_verbosity_info()
     trainer.train()
 
     # ------------------------------------------------------------------
