@@ -751,12 +751,12 @@ def main() -> None:
         """Attacker reward: heuristic complexity of generated scenario.
         Returns challenger_penalty for defender-role rows (masked out).
         """
+        from spice_defender import extract_completion_text
+        from llm_attacker import parse_attacker_actions
         rewards = []
         comps_list = list(completions)
         r_sample = _get(kwargs, "role", 0)
         if getattr(args, "verbose", False) and comps_list and r_sample == "attacker":
-            from spice_defender import extract_completion_text
-            from llm_attacker import parse_attacker_actions
             text = extract_completion_text(comps_list[0])
             _, _, actions = parse_attacker_actions(text, parent_specs[0])
             print(f"\n[VERBOSE] Attacker Sample:\n{comps_list[0]}")
@@ -767,7 +767,6 @@ def main() -> None:
             if r_val != "attacker":
                 rewards.append(0.0)  # neutral mask for defender rows
                 continue
-            from spice_defender import extract_completion_text
             text = extract_completion_text(completion)
             pid = _get(kwargs, "parent_task_id", idx)
             parent = next(s for s in parent_specs if s.task_id == pid)
@@ -801,12 +800,12 @@ def main() -> None:
         """Defender reward: normalised simulator rubric score.
         Returns 0.0 for attacker-role rows (masked out).
         """
+        from spice_defender import extract_completion_text, parse_commands
         rewards = []
         comps_list = list(completions)
         
         r_sample = _get(kwargs, "role", 0)
         if getattr(args, "verbose", False) and comps_list and r_sample == "defender":
-            from spice_defender import extract_completion_text, parse_commands
             text = extract_completion_text(comps_list[0])
             cmds = parse_commands(text)
             print(f"\n[VERBOSE] Defender Sample:\n{comps_list[0]}")
@@ -817,7 +816,6 @@ def main() -> None:
             if r_val != "defender":
                 rewards.append(0.0)  # neutral mask for attacker rows
                 continue
-            from spice_defender import extract_completion_text
             text = extract_completion_text(completion)
             spec_dict = _get(kwargs, "spec", idx)
             spec = ScenarioSpec.model_validate(spec_dict)
