@@ -821,7 +821,9 @@ def main() -> None:
             spec = ScenarioSpec.model_validate(spec_dict)
             try:
                 r = defender_rollout_reward(spec, text)
-            except Exception:
+            except Exception as e:
+                if getattr(args, "verbose", False):
+                    print(f"[SIMULATION ERROR]: {e}")
                 r = -0.25
             rewards.append(normalize_defender_reward(r))
         return rewards
