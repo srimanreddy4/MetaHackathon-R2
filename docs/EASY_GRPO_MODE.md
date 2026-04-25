@@ -41,7 +41,7 @@ The easy reward gives dense partial credit for:
 - choosing the right remediation tool
 - using the exact accepted remediation command
 - declaring resolved
-- keeping the command list concise
+- keeping the command list concise  
 
 It still blends in the real environment reward, so exact recovery remains valuable.
 
