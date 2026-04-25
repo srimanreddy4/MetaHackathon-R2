@@ -238,6 +238,7 @@ def selfplay_iteration(
                 norm_r = normalize_defender_reward(r)
                 defender_rows.append({
                     "task_id": spec.task_id,
+                    "spec": spec.model_dump(),
                     "completion": d_comp,
                     "commands": parse_commands(d_comp),
                     "raw_reward": r,
@@ -709,7 +710,12 @@ def main() -> None:
 
     # Defender rows → prompts for defender role
     for row in all_defender_data:
-        spec = next((s for s in parent_specs if s.task_id == row["task_id"]), None)
+        spec_dict = row.get("spec")
+        if spec_dict:
+            spec = ScenarioSpec.model_validate(spec_dict)
+        else:
+            spec = next((s for s in parent_specs if s.task_id == row["task_id"]), None)
+            
         if spec is None:
             continue
         graph = compile_scenario(spec)
@@ -718,6 +724,7 @@ def main() -> None:
             "role": "defender",
             "parent_task_id": "",
             "task_id": spec.task_id,
+            "spec": spec.model_dump(),
             "root_service": graph.root_cause_service,
             "root_category": graph.root_cause_category,
         })
@@ -801,8 +808,12 @@ def main() -> None:
                 rewards.append(0.0)  # neutral mask for attacker rows
                 continue
             text = completion if isinstance(completion, str) else str(completion)
-            tid = _get(kwargs, "task_id", idx)
-            spec = next((s for s in parent_specs if s.task_id == tid), parent_specs[0])
+            spec_dict = _get(kwargs, "spec", idx)
+            if spec_dict:
+                spec = ScenarioSpec.model_validate(spec_dict)
+            else:
+                tid = _get(kwargs, "task_id", idx)
+                spec = next((s for s in parent_specs if s.task_id == tid), parent_specs[0])
             try:
                 r = defender_rollout_reward(spec, text)
             except Exception:
