@@ -42,7 +42,7 @@ run_train() {
     --lr "${LR:-5e-6}" \
     --save-steps "${save_steps}" \
     --logging-steps "${LOGGING_STEPS:-1}" \
-    --difficulty-source "${DIFFICULTY_SOURCE:-llm_inference}" \
+    --difficulty-source "${DIFFICULTY_SOURCE:-feedback}" \
     --rollouts-per-candidate "${ROLLOUTS_PER_CANDIDATE:-3}" \
     --dynamic-curriculum \
     --curriculum-update-every "${CURRICULUM_UPDATE_EVERY:-50}" \

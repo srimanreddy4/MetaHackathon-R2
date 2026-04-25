@@ -23,7 +23,7 @@ from oncallenv import OnCallRedShiftEnv
 from oncallenv.core.tools import MUTATING_TOOLS, READ_ONLY_TOOLS
 from oncallenv.core.types import Action
 from oncallenv.curriculum import BufferedScenario, RegretBuffer
-from oncallenv.curriculum.autocurriculum import AutocurriculumRunner, LLMDefenderEvaluator
+from oncallenv.curriculum.autocurriculum import AutocurriculumRunner
 
 
 SERVICES = [
@@ -243,14 +243,24 @@ def evolve_curriculum(
 ) -> dict[str, Any]:
     if args.curriculum_evolve_iterations <= 0:
         return {"evolved_count": 0}
-    if args.difficulty_source != "llm_inference":
-        raise ValueError("Curriculum evolution requires --difficulty-source llm_inference. No fallback mode is available.")
-    evaluator = LLMDefenderEvaluator(
-        model_name=args.curriculum_defender_model or args.model_name,
-        rollout_count=args.rollouts_per_candidate,
-        max_steps=args.curriculum_defender_max_steps,
-        temperature=args.curriculum_defender_temperature,
-    )
+    # Use LLM-based evaluator only when explicitly requested; otherwise default to
+    # RandomPolicyEvaluator which estimates solve rate via env rollouts with random
+    # actions — no API key needed.
+    if args.difficulty_source == "llm_inference":
+        from oncallenv.curriculum.autocurriculum import LLMDefenderEvaluator
+        evaluator = LLMDefenderEvaluator(
+            model_name=args.curriculum_defender_model or args.model_name,
+            rollout_count=args.rollouts_per_candidate,
+            max_steps=args.curriculum_defender_max_steps,
+            temperature=args.curriculum_defender_temperature,
+        )
+    else:
+        from oncallenv.curriculum.autocurriculum import RandomPolicyEvaluator
+        evaluator = RandomPolicyEvaluator(
+            rollout_count=args.rollouts_per_candidate,
+            max_steps=args.curriculum_defender_max_steps,
+            seed=args.seed,
+        )
     runner = AutocurriculumRunner.from_seed_dir(
         seed_dir=Path("scenarios_seed"),
         seed=args.seed,

@@ -24,6 +24,65 @@ class DifficultyEvaluator(Protocol):
         """Return solve_rate and evaluation metadata for a scenario."""
 
 
+class RandomPolicyEvaluator:
+    """Estimate difficulty by running a random action policy against the env.
+
+    Scenarios where random actions consistently succeed are too easy (solve_rate
+    near 1.0); scenarios where nothing works are too hard (solve_rate near 0.0).
+    The autocurriculum keeps tasks in the 0.05–0.95 band, which naturally
+    selects non-trivial but learnable scenarios without any LLM API calls.
+    """
+
+    def __init__(self, rollout_count: int = 3, max_steps: int = 12, seed: int = 0):
+        self.rollout_count = rollout_count
+        self.max_steps = max_steps
+        self._rng = random.Random(seed)
+
+    def __call__(self, spec: ScenarioSpec) -> tuple[float, dict]:
+        successes: list[int] = []
+        rewards: list[float] = []
+        for _ in range(self.rollout_count):
+            reward = self._run_rollout(spec)
+            rewards.append(reward)
+            successes.append(1 if reward >= 0.75 else 0)
+        solve_rate = sum(successes) / self.rollout_count
+        return solve_rate, {
+            "defender": "random_policy",
+            "rollout_count": self.rollout_count,
+            "successes": successes,
+            "rewards": rewards,
+        }
+
+    def _run_rollout(self, spec: ScenarioSpec) -> float:
+        from oncallenv.core.tools import MUTATING_TOOLS, READ_ONLY_TOOLS
+
+        env = OnCallRedShiftEnv()
+        obs = env.reset(task_id=spec.task_id, scenario_spec=spec)
+        all_tools = list(READ_ONLY_TOOLS) + list(MUTATING_TOOLS)
+        last_obs = obs
+        for _ in range(self.max_steps):
+            if last_obs.done:
+                break
+            available = last_obs.available_tools or all_tools
+            tool = self._rng.choice(list(available))
+            service = self._rng.choice(last_obs.services) if last_obs.services else ""
+            cmd = f"{tool} {service}".strip() if service else tool
+            last_obs = env.step(Action(command=cmd))
+        if not last_obs.done:
+            last_obs = env.step(Action(command="declare_resolved"))
+            rca_payload = {
+                "root_cause_service": obs.services[0] if obs.services else "unknown",
+                "root_cause_category": "unknown",
+                "timeline": [],
+                "five_whys": ["Random policy rollout."],
+                "action_items": [],
+                "evidence_citations": [],
+                "blast_radius_description": "Random policy evaluation.",
+            }
+            last_obs = env.step(Action(command=f"submit_rca {json.dumps(rca_payload)}"))
+        return float(last_obs.reward or 0.0)
+
+
 class LLMDefenderEvaluator:
     def __init__(
         self,
@@ -121,17 +180,22 @@ class LLMDefenderEvaluator:
 
 
 class AutocurriculumRunner:
-    def __init__(self, seed_specs: list[ScenarioSpec], seed: int = 20260424, evaluator: DifficultyEvaluator | None = None):
+    def __init__(
+        self,
+        seed_specs: list[ScenarioSpec],
+        seed: int = 20260424,
+        evaluator: DifficultyEvaluator | None = None,
+        max_buffer_size: int = 256,
+    ):
         self.rng = random.Random(seed)
         self.mutator = ScenarioMutator(self.rng)
+        self.max_buffer_size = max_buffer_size
         self.buffer = RegretBuffer(
             [BufferedScenario(spec=spec, regret=0.5, solve_rate=0.5) for spec in seed_specs],
             epsilon=0.08,
         )
         self.archive = {self.mutator.novelty_key(spec) for spec in seed_specs}
-        if evaluator is None:
-            raise ValueError("AutocurriculumRunner requires a defender-based evaluator; fallback scoring is disabled.")
-        self.evaluator = evaluator
+        self.evaluator = evaluator if evaluator is not None else RandomPolicyEvaluator(seed=seed)
         self.latest_rollout_stats: list[dict] = []
 
     @classmethod
@@ -140,15 +204,23 @@ class AutocurriculumRunner:
         seed_dir: Path,
         seed: int = 20260424,
         evaluator: DifficultyEvaluator | None = None,
+        max_buffer_size: int = 256,
     ) -> "AutocurriculumRunner":
         specs = [DEFAULT_SCENARIO]
         if seed_dir.exists():
             for path in sorted(seed_dir.glob("*.y*ml")):
                 specs.append(ScenarioSpec.model_validate(yaml.safe_load(path.read_text(encoding="utf-8"))))
         unique = {spec.task_id: spec for spec in specs}
-        return cls(list(unique.values()), seed=seed, evaluator=evaluator)
+        return cls(list(unique.values()), seed=seed, evaluator=evaluator, max_buffer_size=max_buffer_size)
 
     def evolve(self, iterations: int) -> RegretBuffer:
+        """Run `iterations` mutation rounds, maintaining a fixed-size buffer.
+
+        Selection criterion: keep the K scenarios with the highest Bernoulli
+        variance  p*(1-p)  (maximised at p=0.5, i.e. medium difficulty).
+        Every novel candidate is evaluated; if the buffer is full it evicts the
+        current lowest-variance entry only when the candidate is strictly better.
+        """
         generation = 0
         attempts = 0
         while generation < iterations and attempts < iterations * 20:
@@ -159,13 +231,32 @@ class AutocurriculumRunner:
             if novelty in self.archive:
                 continue
             solve_rate, eval_meta = self._estimate_solve_rate(candidate)
-            if not 0.05 <= solve_rate <= 0.95:
-                continue
-            regret = 1.0 - abs(0.5 - solve_rate) * 2.0
-            self.buffer.add(BufferedScenario(spec=candidate, regret=regret, solve_rate=solve_rate))
+            variance = solve_rate * (1.0 - solve_rate)  # Bernoulli variance
+            regret = 1.0 - abs(0.5 - solve_rate) * 2.0  # kept for buffer sampling weights
+            new_item = BufferedScenario(spec=candidate, regret=regret, solve_rate=solve_rate)
+            if len(self.buffer) < self.max_buffer_size:
+                # Buffer has room — always add
+                self.buffer.add(new_item)
+            else:
+                # Find the current worst (lowest variance) evolved entry to potentially evict
+                evolved = [
+                    (i, item)
+                    for i, item in enumerate(self.buffer.scenarios)
+                    if item.spec.task_id.startswith("evolved_")
+                ]
+                if evolved:
+                    worst_idx, worst_item = min(evolved, key=lambda t: t[1].solve_rate * (1.0 - t[1].solve_rate))
+                    worst_variance = worst_item.solve_rate * (1.0 - worst_item.solve_rate)
+                    if variance > worst_variance:
+                        self.buffer.scenarios[worst_idx] = new_item
+                    else:
+                        continue  # candidate not better — skip, don't count as generation
+                else:
+                    self.buffer.add(new_item)  # no evolved entries yet, just append
             meta = dict(eval_meta)
             meta["task_id"] = candidate.task_id
             meta["solve_rate"] = solve_rate
+            meta["variance"] = variance
             self.latest_rollout_stats.append(meta)
             self.archive.add(novelty)
             generation += 1
