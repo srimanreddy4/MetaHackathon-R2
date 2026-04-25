@@ -15,7 +15,10 @@ from llm_attacker import build_attacker_prompt, parse_attacker_actions
 from spice_defender import build_defender_prompt, defender_rollout_reward
 
 def generate_text(model, tokenizer, prompt: str, max_new_tokens: int) -> str:
-    inputs = tokenizer(prompt, return_tensors="pt").to(model.device)
+    chat = [{"role": "user", "content": prompt}]
+    formatted_prompt = tokenizer.apply_chat_template(chat, tokenize=False, add_generation_prompt=True)
+    
+    inputs = tokenizer(formatted_prompt, return_tensors="pt").to(model.device)
     with torch.no_grad():
         ids = model.generate(
             **inputs,

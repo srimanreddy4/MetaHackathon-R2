@@ -75,9 +75,16 @@ def generate_text(
     if isinstance(prompt, str):
         prompt = [prompt]
         
+    # Inject Chat Template formatting (adds <|im_start|>user ... tags)
+    chat_prompts = []
+    for p in prompt:
+        chat = [{"role": "user", "content": p}]
+        formatted = tokenizer.apply_chat_template(chat, tokenize=False, add_generation_prompt=True)
+        chat_prompts.append(formatted)
+        
     old_padding_side = tokenizer.padding_side
     tokenizer.padding_side = "left"
-    inputs = tokenizer(prompt, return_tensors="pt", padding=True).to(model.device)
+    inputs = tokenizer(chat_prompts, return_tensors="pt", padding=True).to(model.device)
     tokenizer.padding_side = old_padding_side
     
     with torch.no_grad():
