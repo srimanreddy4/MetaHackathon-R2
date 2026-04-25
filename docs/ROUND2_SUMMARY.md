@@ -194,11 +194,13 @@ Added/updated notebooks:
 - `notebooks/01_smoke_test.ipynb`
 - `notebooks/02_train_grpo_unsloth.ipynb`
 - `notebooks/03_eval_baseline_vs_trained.ipynb`
+- `notebooks/04_kaggle_qwen3b_grpo.ipynb`
+- `notebooks/05_easy_grpo_kaggle.ipynb`
 
 Important clarification:
 
-- The runnable completed trainer is a lightweight neural policy over the symbolic SRE action space.
-- The GRPO/Unsloth notebook documents the intended LLM training path and how it should connect to the environment, but a full LLM GRPO/Unsloth training run has not yet been completed.
+- The original completed trainer is a lightweight neural policy over the symbolic SRE action space.
+- The later Kaggle work added real Unsloth Qwen2.5-3B LoRA checkpoints for both easy all-at-once GRPO and interactive ReAct-style SFT.
 
 ## What Models Were Used
 
@@ -317,6 +319,67 @@ Artifacts:
 - `docs/plots/curriculum_policy_baseline_vs_trained.png`
 - `docs/plots/curriculum_policy_training_curve.png`
 
+### Model 4: Kaggle Qwen2.5-3B Easy GRPO Checkpoint
+
+Used for:
+
+- Running an actual Unsloth/LoRA text-to-actions training lane.
+- Testing easier prompts and shaped reward credit so the LLM receives a smoother learning signal.
+- Producing a high-score checkpoint comparison against the earlier hard all-at-once GRPO run.
+
+Implementation:
+
+- Script: `scripts/train_unsloth_grpo.py`
+- Notebook: `notebooks/05_easy_grpo_kaggle.ipynb`
+- Model: `unsloth/Qwen2.5-3B-Instruct-bnb-4bit`
+- Mode: all-at-once `<actions>` generation
+- Latest evaluated checkpoint: `training_results/unsloth_grpo_qwen3b_easy/checkpoint-200`
+
+Checkpoint result:
+
+| Policy | Mean reward |
+| --- | ---: |
+| Easy baseline | 0.7464 |
+| Easy GRPO checkpoint | 0.9051 |
+
+Artifacts:
+
+- `docs/easy_grpo_interrupted_report.json`
+- `docs/plots/easy_grpo_qwen3b_reward_curve.png`
+- `docs/plots/easy_grpo_qwen3b_checkpoint_results.png`
+- `docs/plots/easy_grpo_qwen3b_completion_health.png`
+
+### Model 5: Interactive ReAct Qwen2.5-3B SFT Checkpoint
+
+Used for:
+
+- Training a defender that acts one command at a time after each observation.
+- Demonstrating an SRE-style investigation process rather than a single all-at-once action block.
+- Creating trajectory artifacts that can power an interactive UI/demo.
+
+Implementation:
+
+- Scripts: `scripts/generate_react_trajectories.py`, `scripts/train_react_sft.py`, `scripts/evaluate_react_sft_checkpoint.py`
+- Notebook: `notebooks/05_easy_grpo_kaggle.ipynb`
+- Model: `unsloth/Qwen2.5-3B-Instruct-bnb-4bit`
+- Dataset: 120 scripted expert scenarios, 927 turn-level rows, deterministic 100/20 train/eval task split
+- Latest evaluated checkpoint: `training_results/react_sft_qwen3b/checkpoint-100`
+
+Checkpoint result:
+
+| Metric | Value |
+| --- | ---: |
+| Held-out next-action accuracy | 0.9583 |
+| Interactive mean reward, 5 rollout fast eval | 0.8068 |
+| Scripted expert mean reward on generated trajectories | 0.9715 |
+
+Artifacts:
+
+- `docs/react_sft_checkpoint_eval_report.json`
+- `docs/react_sft_interrupted_report.json`
+- `docs/plots/react_sft_qwen3b_fast_checkpoint_eval.png`
+- `docs/plots/react_sft_qwen3b_fast_rollout_rewards.png`
+
 ## Server Usage
 
 The professor server was used for remote validation and GPU training.
@@ -419,13 +482,14 @@ docker run --rm -p 7860:7860 oncallenv-redshift
    - Why composable rubrics are better than one opaque score.
    - Why regret/autocurriculum creates harder incidents.
    - Training improvement from baseline to curriculum policy.
+   - Why the ReAct defender is more realistic than all-at-once action generation.
 
 Optional stretch work:
 
-1. Complete actual LLM GRPO/Unsloth training.
-   - Current notebook documents the path.
-   - The environment is ready for text-to-action rollouts.
-   - This would make the submission stronger if time and GPU budget allow.
+1. Extend actual LLM training runs.
+   - Easy Qwen2.5-3B GRPO has produced a checkpoint reward result.
+   - Interactive ReAct SFT has produced a checkpoint action-accuracy and rollout-reward result.
+   - The next useful extension is a longer ReAct eval or a short interactive GRPO continuation from the SFT adapter.
 
 2. Add external LLM reviewer mode.
    - Current reviewer is deterministic and reproducible.
@@ -445,28 +509,26 @@ Optional stretch work:
 
 ## Honest Status of GRPO/Unsloth
 
-The project includes a notebook named `02_train_grpo_unsloth.ipynb`, but the completed training artifacts are from the symbolic SRE-action neural policy, not a full LLM GRPO/Unsloth run.
-
 What is ready:
 
 - Environment rollouts.
 - Rewards.
 - Action parser target.
-- Notebook wiring notes.
 - Fast simulator.
+- Unsloth Qwen2.5-3B easy GRPO checkpoint evaluation.
+- Unsloth Qwen2.5-3B interactive ReAct SFT checkpoint evaluation.
 
-What is not yet done:
+What is still not final:
 
-- Loading an LLM with Unsloth.
-- Running GRPO groups over text generations.
-- Producing a trained LLM checkpoint.
+- The easy GRPO run was interrupted and should be reported as a checkpoint result, not a final converged run.
+- The ReAct rollout result is a fast 5-task checkpoint eval; a larger held-out rollout eval should be run if GPU time permits.
+- The Kaggle adapter artifacts should be exported into `artifacts/models/` for final packaging.
 
-For the current submission, the strongest defensible result is the curriculum-trained neural defender policy:
+For the current submission, the strongest defensible results are:
 
-- Baseline: 0.5538 to 0.5626 depending on evaluation sample.
-- Trained: 0.9073.
-- Trained on evolved curriculum tasks.
-- Checkpoint and plots are committed.
+- Curriculum symbolic policy: 0.5538 baseline to 0.9073 trained on evolved tasks.
+- Easy Qwen2.5-3B GRPO checkpoint: 0.7464 baseline to 0.9051 checkpoint reward.
+- Interactive ReAct Qwen2.5-3B SFT checkpoint: 0.9583 next-action accuracy and 0.8068 interactive rollout reward on fast eval.
 
 ## Recommended Submission Story
 

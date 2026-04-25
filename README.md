@@ -103,19 +103,19 @@ bash scripts/run_kaggle_qwen3b_grpo.sh react-eval-checkpoint
 bash scripts/run_kaggle_qwen3b_grpo.sh export-react-artifacts
 ```
 
-Current interrupted ReAct SFT result:
+Current ReAct SFT checkpoint result:
 
-| Run | Status | Saved checkpoint | First logged loss | Last logged loss | Best logged loss |
-| --- | --- | --- | ---: | ---: | ---: |
-| Interactive ReAct SFT Qwen2.5-3B | stopped around step 80/100 | `checkpoint-50` | 4.0684 | 0.0570 | 0.0184 |
+| Run | Checkpoint | Eval action rows | Eval rollout tasks | Next-action accuracy | Interactive mean reward |
+| --- | --- | ---: | ---: | ---: | ---: |
+| Interactive ReAct SFT Qwen2.5-3B | `checkpoint-100` | 24 | 5 | 0.9583 | 0.8068 |
 
-The loss curve shows clear next-command learning. The full partial report extracted from the notebook output is in `docs/react_sft_interrupted_report.json`.
+This is the key ReAct result: the model is learning a stepwise SRE workflow, where every generated command receives a new observation before the next command is chosen. The full checkpoint report extracted from the notebook output is in `docs/react_sft_checkpoint_eval_report.json`.
 
-![Interactive ReAct SFT Loss Curve](docs/plots/react_sft_qwen3b_partial_loss_curve.png)
+![Interactive ReAct Checkpoint Evaluation](docs/plots/react_sft_qwen3b_fast_checkpoint_eval.png)
 
-![Interactive ReAct SFT Loss Summary](docs/plots/react_sft_qwen3b_partial_loss_summary.png)
+![Interactive ReAct Rollout Reward](docs/plots/react_sft_qwen3b_fast_rollout_rewards.png)
 
-![Interactive ReAct SFT Grad Norm](docs/plots/react_sft_qwen3b_partial_grad_norm.png)
+Training loss still confirms the warm-start behaved correctly, but it is secondary to the reward/rollout result. The partial loss-only report remains in `docs/react_sft_interrupted_report.json` for audit history.
 
 To score the saved checkpoint on held-out interactive rollouts inside Kaggle:
 
