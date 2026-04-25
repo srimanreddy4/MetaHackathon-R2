@@ -83,6 +83,25 @@ This creates:
 
 Download that archive and place/extract it under `artifacts/models/`. See `artifacts/README.md` for the exact local commands.
 
+## Interactive ReAct Defender Experiment
+
+The next training lane is an interactive ReAct-style defender. Instead of generating every action at once, the model learns:
+
+```text
+current observation + command history -> one next command
+```
+
+This produces a more realistic learning curve for incident response and directly supports an interactive UI/demo. The runbook is in `docs/INTERACTIVE_REACT_SFT.md`.
+
+Kaggle commands:
+
+```bash
+bash scripts/run_kaggle_qwen3b_grpo.sh react-generate
+bash scripts/run_kaggle_qwen3b_grpo.sh react-sft-smoke
+bash scripts/run_kaggle_qwen3b_grpo.sh react-sft-main
+bash scripts/run_kaggle_qwen3b_grpo.sh export-react-artifacts
+```
+
 ## Why This Exists
 
 Incident response is a messy, partially observable skill. Real on-call engineers do not get a clean multiple-choice prompt; they get noisy alerts, misleading deploy history, scattered logs, and a clock. Red Shift turns that workflow into a fast RL environment: no real Kubernetes, no slow Chaos Mesh cluster, just a deterministic pure-Python microservice simulator that can run thousands of rollouts cheaply.

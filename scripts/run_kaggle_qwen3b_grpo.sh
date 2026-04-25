@@ -75,6 +75,49 @@ case "${MODE}" in
     EXTRA_ARGS=(--reward-mode easy --prompt-mode easy --prompt-variants 3)
     run_train training_results/unsloth_grpo_qwen3b_easy 120 300 8 1280 768 256 32 50 "${EXTRA_ARGS[@]}"
     ;;
+  react-generate)
+    python scripts/generate_react_trajectories.py \
+      --curriculum-buffer curriculum_results/buffer.json \
+      --out-dir training_results/react_sft_qwen3b \
+      --max-tasks 120 \
+      --train-tasks 100
+    ;;
+  react-sft-smoke)
+    python scripts/train_react_sft.py \
+      --model-name "${MODEL_NAME}" \
+      --curriculum-buffer curriculum_results/buffer.json \
+      --out-dir training_results/react_sft_qwen3b_smoke \
+      --max-tasks 40 \
+      --train-tasks 32 \
+      --max-steps 50 \
+      --per-device-train-batch-size "${PER_DEVICE_TRAIN_BATCH_SIZE}" \
+      --gradient-accumulation-steps 8 \
+      --max-seq-length 1536 \
+      --max-new-tokens 64 \
+      --eval-action-rows 40 \
+      --eval-rollout-tasks 8 \
+      --max-turns 10 \
+      --save-steps 50 \
+      --logging-steps 5
+    ;;
+  react-sft-main)
+    python scripts/train_react_sft.py \
+      --model-name "${MODEL_NAME}" \
+      --curriculum-buffer curriculum_results/buffer.json \
+      --out-dir training_results/react_sft_qwen3b \
+      --max-tasks 120 \
+      --train-tasks 100 \
+      --max-steps 100 \
+      --per-device-train-batch-size "${PER_DEVICE_TRAIN_BATCH_SIZE}" \
+      --gradient-accumulation-steps 8 \
+      --max-seq-length 1536 \
+      --max-new-tokens 64 \
+      --eval-action-rows 80 \
+      --eval-rollout-tasks 20 \
+      --max-turns 10 \
+      --save-steps 50 \
+      --logging-steps 5
+    ;;
   resume-main)
     shopt -s nullglob
     checkpoints=(training_results/unsloth_grpo_qwen3b_kaggle/checkpoint-*)
@@ -95,7 +138,7 @@ case "${MODE}" in
     ;;
   archive)
     shopt -s nullglob
-    result_dirs=(training_results/unsloth_grpo_qwen3b_* training_results/unsloth_grpo_kaggle_ablation)
+    result_dirs=(training_results/unsloth_grpo_qwen3b_* training_results/unsloth_grpo_kaggle_ablation training_results/react_sft_qwen3b*)
     if (( ${#result_dirs[@]} == 0 )); then
       echo "No GRPO result directories found to archive." >&2
       exit 1
@@ -156,6 +199,19 @@ case "${MODE}" in
     ls -lh "${archive}" "${dest}"
     echo "Copied archive into repo artifact folder: ${dest}"
     ;;
+  export-react-artifacts)
+    shopt -s nullglob
+    result_dirs=(training_results/react_sft_qwen3b*)
+    if (( ${#result_dirs[@]} == 0 )); then
+      echo "No ReAct SFT result directories found. Run react-sft-smoke or react-sft-main first." >&2
+      exit 1
+    fi
+    tar -czf /kaggle/working/react_sft_qwen3b_artifacts.tar.gz \
+      "${result_dirs[@]}" \
+      docs/plots/react_sft_qwen3b_*.png
+    ls -lh /kaggle/working/react_sft_qwen3b_artifacts.tar.gz
+    echo "Download from Kaggle: /kaggle/working/react_sft_qwen3b_artifacts.tar.gz"
+    ;;
   summary)
     python scripts/summarize_unsloth_grpo.py training_results/unsloth_grpo_qwen3b_kaggle
     ;;
@@ -186,6 +242,10 @@ Usage:
   bash scripts/run_kaggle_qwen3b_grpo.sh easy-smoke
   bash scripts/run_kaggle_qwen3b_grpo.sh main
   bash scripts/run_kaggle_qwen3b_grpo.sh easy-main
+  bash scripts/run_kaggle_qwen3b_grpo.sh react-generate
+  bash scripts/run_kaggle_qwen3b_grpo.sh react-sft-smoke
+  bash scripts/run_kaggle_qwen3b_grpo.sh react-sft-main
+  bash scripts/run_kaggle_qwen3b_grpo.sh export-react-artifacts
   bash scripts/run_kaggle_qwen3b_grpo.sh resume-main
   bash scripts/run_kaggle_qwen3b_grpo.sh long
   bash scripts/run_kaggle_qwen3b_grpo.sh fallback-1b5
