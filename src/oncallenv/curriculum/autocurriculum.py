@@ -17,7 +17,6 @@ from oncallenv.core.env import DEFAULT_SCENARIO
 from oncallenv.core.types import Action, ScenarioSpec
 from oncallenv.curriculum.buffer import BufferedScenario, RegretBuffer
 from oncallenv.curriculum.mutator import ScenarioMutator
-from oncallenv.simulation.scenario_compiler import compile_scenario
 
 
 class DifficultyEvaluator(Protocol):
@@ -116,27 +115,9 @@ class LLMDefenderEvaluator:
             raw = (completion.choices[0].message.content or "").strip()
             if raw:
                 return raw.splitlines()[0].strip()
-        except Exception:
-            pass
-        # Conservative fallback sequence keeps rollouts deterministic on API failures.
-        if step <= 2:
-            return f"kubectl_logs {root_service}"
-        if step == 3:
-            return f"kubectl_top {root_service}"
-        if step == 4:
-            return f"kubectl_rollout_restart {root_service}"
-        if step == 5:
-            return "declare_resolved"
-        rca_payload = {
-            "root_cause_service": root_service,
-            "root_cause_category": "unknown",
-            "timeline": [],
-            "five_whys": ["Service-level anomaly observed during incident triage."],
-            "action_items": [f"Add diagnostics for {root_service}"],
-            "evidence_citations": [{"source": "log", "ref": f"kubectl_logs {root_service}", "excerpt": "error indicators"}],
-            "blast_radius_description": "Customer impact seen before mitigation.",
-        }
-        return f"submit_rca {json.dumps(rca_payload)}"
+        except Exception as exc:
+            raise RuntimeError(f"LLM completion failed at step {step} for task {obs.task_id}") from exc
+        raise RuntimeError(f"LLM returned empty completion at step {step} for task {obs.task_id}")
 
 
 class AutocurriculumRunner:
@@ -148,6 +129,8 @@ class AutocurriculumRunner:
             epsilon=0.08,
         )
         self.archive = {self.mutator.novelty_key(spec) for spec in seed_specs}
+        if evaluator is None:
+            raise ValueError("AutocurriculumRunner requires a defender-based evaluator; fallback scoring is disabled.")
         self.evaluator = evaluator
         self.latest_rollout_stats: list[dict] = []
 
@@ -189,25 +172,7 @@ class AutocurriculumRunner:
         return self.buffer
 
     def _estimate_solve_rate(self, spec: ScenarioSpec) -> tuple[float, dict]:
-        if self.evaluator is not None:
-            return self.evaluator(spec)
-        solve_rate = self._heuristic_solve_rate(spec)
-        return solve_rate, {"defender": "heuristic", "rollout_count": 1, "rewards": [solve_rate], "reward_mean": solve_rate, "reward_std": 0.0}
-
-    def _heuristic_solve_rate(self, spec: ScenarioSpec) -> float:
-        graph = compile_scenario(spec)
-        base = 0.82
-        if spec.fault_secondary:
-            base -= 0.22
-        base -= 0.20 * spec.metric_noise
-        base -= 0.18 * spec.blast_radius
-        if spec.red_herring:
-            base -= 0.08
-        if spec.schema_drift and spec.schema_drift != "none":
-            base -= 0.10
-        if graph.root_cause_service in {"postgres-primary", "redis-cache"}:
-            base -= 0.06
-        return max(0.02, min(0.98, base + self.rng.uniform(-0.08, 0.08)))
+        return self.evaluator(spec)
 
     @staticmethod
     def write_yaml_scenarios(buffer: RegretBuffer, output_dir: Path) -> None:

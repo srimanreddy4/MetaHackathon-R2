@@ -41,7 +41,15 @@ run_train() {
     --eval-tasks "${eval_tasks}" \
     --lr "${LR:-5e-6}" \
     --save-steps "${save_steps}" \
-    --logging-steps "${LOGGING_STEPS:-5}"
+    --logging-steps "${LOGGING_STEPS:-1}" \
+    --difficulty-source "${DIFFICULTY_SOURCE:-llm_inference}" \
+    --rollouts-per-candidate "${ROLLOUTS_PER_CANDIDATE:-3}" \
+    --dynamic-curriculum \
+    --curriculum-update-every "${CURRICULUM_UPDATE_EVERY:-50}" \
+    --curriculum-evolve-iterations "${CURRICULUM_EVOLVE_ITERATIONS:-10}" \
+    --print-completions \
+    --verbose \
+
 }
 
 case "${MODE}" in
@@ -60,10 +68,6 @@ case "${MODE}" in
     ;;
   long)
     run_train training_results/unsloth_grpo_qwen3b_kaggle_long 206 1000 8 1024 768 192 48 100
-    ;;
-  fallback-1b5)
-    MODEL_NAME="${FALLBACK_MODEL_NAME:-unsloth/Qwen2.5-1.5B-Instruct-bnb-4bit}"
-    run_train training_results/unsloth_grpo_kaggle_ablation 120 500 4 1024 768 192 24 100
     ;;
   archive)
     shopt -s nullglob
@@ -102,7 +106,6 @@ Usage:
   bash scripts/run_kaggle_qwen3b_grpo.sh smoke
   bash scripts/run_kaggle_qwen3b_grpo.sh main
   bash scripts/run_kaggle_qwen3b_grpo.sh long
-  bash scripts/run_kaggle_qwen3b_grpo.sh fallback-1b5
   bash scripts/run_kaggle_qwen3b_grpo.sh summary
   bash scripts/run_kaggle_qwen3b_grpo.sh archive
 EOF

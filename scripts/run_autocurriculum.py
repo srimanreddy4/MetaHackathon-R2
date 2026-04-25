@@ -21,21 +21,19 @@ def main() -> None:
     parser.add_argument("--seed-dir", type=Path, default=Path("scenarios_seed"))
     parser.add_argument("--out-dir", type=Path, default=Path("curriculum_results"))
     parser.add_argument("--write-yaml", action="store_true")
-    parser.add_argument("--difficulty-source", choices=["heuristic", "llm_inference"], default="heuristic")
+    parser.add_argument("--difficulty-source", choices=["llm_inference"], default="llm_inference")
     parser.add_argument("--model-name", default="Qwen/Qwen2.5-72B-Instruct")
     parser.add_argument("--rollouts-per-candidate", type=int, default=3)
     parser.add_argument("--defender-max-steps", type=int, default=18)
     parser.add_argument("--defender-temperature", type=float, default=0.2)
     args = parser.parse_args()
 
-    evaluator = None
-    if args.difficulty_source == "llm_inference":
-        evaluator = LLMDefenderEvaluator(
-            model_name=args.model_name,
-            rollout_count=args.rollouts_per_candidate,
-            max_steps=args.defender_max_steps,
-            temperature=args.defender_temperature,
-        )
+    evaluator = LLMDefenderEvaluator(
+        model_name=args.model_name,
+        rollout_count=args.rollouts_per_candidate,
+        max_steps=args.defender_max_steps,
+        temperature=args.defender_temperature,
+    )
     runner = AutocurriculumRunner.from_seed_dir(args.seed_dir, seed=args.seed, evaluator=evaluator)
     buffer = runner.evolve(args.iterations)
     args.out_dir.mkdir(parents=True, exist_ok=True)
