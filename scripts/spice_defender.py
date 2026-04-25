@@ -43,6 +43,9 @@ DEFENDER_SYSTEM = (
 # Prompt builder
 # ---------------------------------------------------------------------------
 
+# 1. You MUST first think step-by-step inside <reasoning> and </reasoning> tags. Explain your logic based purely on the Alert details.
+# 2. After reasoning, you MUST output ONLY the executable commands inside <actions> and </actions> tags.
+# 3. Put exactly ONE simulator command per line inside the actions block.
 
 def build_defender_prompt(spec: ScenarioSpec) -> str:
     """Build the SRE prompt from a ScenarioSpec (compiles it first)."""

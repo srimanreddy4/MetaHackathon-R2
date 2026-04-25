@@ -380,20 +380,16 @@ def evaluate_model(
     generations: dict[str, dict[str, Any]] = {}
     model.eval()
 
-    for spec in eval_specs:
-        prompt = build_defender_prompt(spec)
-        inputs = tokenizer(prompt, return_tensors="pt").to(model.device)
-        with torch.no_grad():
-            output_ids = model.generate(
-                **inputs,
-                max_new_tokens=max_new_tokens,
-                do_sample=False,
-                pad_token_id=tokenizer.eos_token_id,
-            )
-        completion = tokenizer.decode(
-            output_ids[0][inputs["input_ids"].shape[-1]:],
-            skip_special_tokens=True,
-        )
+    prompts = [build_defender_prompt(spec) for spec in eval_specs]
+    
+    completions = generate_text(
+        model, tokenizer, prompts,
+        max_new_tokens=max_new_tokens,
+        temperature=0.0, # Forces do_sample=False inside generate_text
+        num_return=1,
+    )
+
+    for spec, completion in zip(eval_specs, completions):
         try:
             reward = defender_rollout_reward(spec, completion)
         except Exception:
@@ -625,11 +621,12 @@ def main() -> None:
     # 4. Self-play loop
     # ------------------------------------------------------------------
     print("\n=== Starting SPICE Self-Play ===")
+    from tqdm.auto import tqdm
     all_attacker_data: list[dict] = []
     all_defender_data: list[dict] = []
     iteration_summaries: list[dict] = []
 
-    for iteration in range(args.selfplay_iterations):
+    for iteration in tqdm(range(args.selfplay_iterations), desc="SPICE Generation Phase"):
         # Sample a batch of parent scenarios
         batch = rng.sample(
             parent_specs,
@@ -673,12 +670,11 @@ def main() -> None:
         }
         iteration_summaries.append(iter_summary)
 
-        if iteration % 10 == 0 or iteration == args.selfplay_iterations - 1:
-            print(
-                f"[Iter {iteration:>4d}] "
-                f"Attacker r={a_mean:.3f} ({valid_count}/{len(a_rows)} valid) | "
-                f"Defender r={d_mean:.3f}"
-            )
+        print(
+            f"[Iter {iteration:>4d}] "
+            f"Attacker r={a_mean:.3f} ({valid_count}/{len(a_rows)} valid) | "
+            f"Defender r={d_mean:.3f}"
+        )
 
     # Save self-play generation data
     (args.out_dir / "attacker_generations.json").write_text(
