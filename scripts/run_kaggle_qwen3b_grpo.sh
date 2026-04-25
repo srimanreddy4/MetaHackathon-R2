@@ -25,6 +25,8 @@ run_train() {
   local completion_len="$7"
   local eval_tasks="$8"
   local save_steps="$9"
+  shift 9
+  local extra_args=("$@")
 
   local resume_args=()
   if [[ -n "${RESUME_FROM_CHECKPOINT:-}" ]]; then
@@ -47,6 +49,7 @@ run_train() {
     --lr "${LR:-5e-6}" \
     --save-steps "${save_steps}" \
     --logging-steps "${LOGGING_STEPS:-5}" \
+    "${extra_args[@]}" \
     "${resume_args[@]}"
 }
 
@@ -61,8 +64,16 @@ case "${MODE}" in
   smoke)
     run_train training_results/unsloth_grpo_qwen3b_smoke 40 50 4 768 512 128 8 50
     ;;
+  easy-smoke)
+    EXTRA_ARGS=(--reward-mode easy --prompt-mode easy --prompt-variants 2)
+    run_train training_results/unsloth_grpo_qwen3b_easy_smoke 40 50 4 768 512 128 8 50 "${EXTRA_ARGS[@]}"
+    ;;
   main)
     run_train training_results/unsloth_grpo_qwen3b_kaggle 160 600 8 1024 768 192 32 100
+    ;;
+  easy-main)
+    EXTRA_ARGS=(--reward-mode easy --prompt-mode easy --prompt-variants 3)
+    run_train training_results/unsloth_grpo_qwen3b_easy 120 300 8 1024 768 192 32 50 "${EXTRA_ARGS[@]}"
     ;;
   resume-main)
     shopt -s nullglob
@@ -95,6 +106,9 @@ case "${MODE}" in
   summary)
     python scripts/summarize_unsloth_grpo.py training_results/unsloth_grpo_qwen3b_kaggle
     ;;
+  easy-summary)
+    python scripts/summarize_unsloth_grpo.py training_results/unsloth_grpo_qwen3b_easy
+    ;;
   *)
     cat >&2 <<EOF
 Unknown mode: ${MODE}
@@ -103,11 +117,14 @@ Usage:
   bash scripts/run_kaggle_qwen3b_grpo.sh gpu
   bash scripts/run_kaggle_qwen3b_grpo.sh verify
   bash scripts/run_kaggle_qwen3b_grpo.sh smoke
+  bash scripts/run_kaggle_qwen3b_grpo.sh easy-smoke
   bash scripts/run_kaggle_qwen3b_grpo.sh main
+  bash scripts/run_kaggle_qwen3b_grpo.sh easy-main
   bash scripts/run_kaggle_qwen3b_grpo.sh resume-main
   bash scripts/run_kaggle_qwen3b_grpo.sh long
   bash scripts/run_kaggle_qwen3b_grpo.sh fallback-1b5
   bash scripts/run_kaggle_qwen3b_grpo.sh summary
+  bash scripts/run_kaggle_qwen3b_grpo.sh easy-summary
   bash scripts/run_kaggle_qwen3b_grpo.sh archive
 EOF
     exit 2

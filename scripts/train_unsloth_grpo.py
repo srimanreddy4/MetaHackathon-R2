@@ -51,6 +51,28 @@ COMMAND_RE = re.compile(
 )
 
 
+FAULT_RUNBOOK_HINTS = {
+    "oom_kill": "memory pressure or OOMKilled usually needs kubectl_rollout_restart on the faulty service",
+    "cpu_hog": "CPU saturation usually needs kubectl_scale on the faulty service",
+    "network_partition": "network partition symptoms usually need traffic_split_update on the faulty service",
+    "dns_misconfig": "DNS or no-route symptoms usually need kubectl_apply_config on the faulty service",
+    "replica_lag": "replica lag usually needs feature_flag_toggle on the faulty service",
+    "cache_stampede": "cache stampede usually needs feature_flag_toggle on the faulty service",
+    "http_503_loop": "HTTP 503 loops usually need kubectl_rollout_undo on the faulty service",
+    "deadlock": "deadlocks usually need kubectl_rollout_restart on the faulty service",
+    "disk_full": "disk-full configuration incidents usually need kubectl_apply_config on the faulty service",
+    "cert_expiry": "certificate expiry usually needs kubectl_apply_config on the faulty service",
+    "clock_skew": "clock skew usually needs kubectl_rollout_restart on the faulty service",
+    "gc_pause": "GC pause incidents usually need kubectl_rollout_restart on the faulty service",
+}
+
+PROMPT_TEMPLATES = [
+    "standard",
+    "runbook",
+    "triage",
+]
+
+
 def build_rca(service: str, category: str) -> str:
     return json.dumps(
         {
@@ -75,18 +97,34 @@ def build_rca(service: str, category: str) -> str:
     )
 
 
-def inspect_task(task_id: str) -> dict[str, Any]:
-    env = OnCallRedShiftEnv()
-    obs = env.reset(task_id=task_id)
-    graph = env._runtime.graph
-    service = graph.root_cause_service
-    category = graph.root_cause_category
-    prompt = f"""You are the on-call SRE for OnCallEnv Red Shift.
+def required_pairs(required: list[str]) -> list[tuple[str, str]]:
+    pairs = []
+    for item in required:
+        if ":" in item:
+            tool, service = item.split(":", 1)
+            pairs.append((tool, service))
+    return pairs
+
+
+def build_prompt(
+    *,
+    task_id: str,
+    alert_service: str,
+    alert_message: str,
+    services: list[str],
+    tools: list[str],
+    root_service: str,
+    root_category: str,
+    required: list[str],
+    prompt_mode: str,
+    template: str,
+) -> str:
+    base = f"""You are the on-call SRE for OnCallEnv Red Shift.
 
 Task id: {task_id}
-Critical alert: {obs.alerts[0].service} reports {obs.alerts[0].message}
-Available services: {", ".join(obs.services)}
-Available tools: {", ".join(obs.available_tools)}
+Critical alert: {alert_service} reports {alert_message}
+Available services: {", ".join(services)}
+Available tools: {", ".join(tools)}
 
 Return only a short action plan. Put one simulator command per line inside:
 <actions>
@@ -100,12 +138,58 @@ feature_flag_toggle SERVICE, traffic_split_update SERVICE,
 kubectl_apply_config SERVICE, and declare_resolved.
 Do not include prose outside the tags.
 """
+    if prompt_mode == "hard":
+        return base
+
+    accepted = ", ".join(f"{tool} {service}" for tool, service in required_pairs(required))
+    hint = FAULT_RUNBOOK_HINTS.get(root_category, f"{root_category} symptoms should be remediated on {root_service}")
+    if template == "runbook":
+        return (
+            base
+            + f"\nTraining runbook hint: suspected faulty service is {root_service}. "
+            + f"Fault family is {root_category}. {hint}. "
+            + f"Accepted remediation command for this easy curriculum item: {accepted}.\n"
+        )
+    if template == "triage":
+        return (
+            base
+            + f"\nEasy triage hints: first inspect {root_service}; then apply the remediation matching {root_category}; "
+            + f"then declare_resolved. Gold remediation: {accepted}.\n"
+        )
+    return (
+        base
+        + f"\nEasy-mode hints: root service = {root_service}; fault = {root_category}; "
+        + f"best remediation = {accepted}. Include declare_resolved after the fix.\n"
+    )
+
+
+def inspect_task(task_id: str, *, prompt_mode: str = "hard", template: str = "standard") -> dict[str, Any]:
+    env = OnCallRedShiftEnv()
+    obs = env.reset(task_id=task_id)
+    graph = env._runtime.graph
+    service = graph.root_cause_service
+    category = graph.root_cause_category
+    required = sorted(graph.required_remediations)
+    prompt = build_prompt(
+        task_id=task_id,
+        alert_service=obs.alerts[0].service,
+        alert_message=obs.alerts[0].message,
+        services=obs.services,
+        tools=obs.available_tools,
+        root_service=service,
+        root_category=category,
+        required=required,
+        prompt_mode=prompt_mode,
+        template=template,
+    )
     return {
         "prompt": prompt,
         "task_id": task_id,
         "root_service": service,
         "root_category": category,
-        "required": sorted(graph.required_remediations),
+        "required": required,
+        "prompt_mode": prompt_mode,
+        "template": template,
     }
 
 
@@ -164,7 +248,49 @@ def parse_commands(text: str, max_commands: int = 10) -> list[str]:
     return commands
 
 
-def rollout_reward(task_id: str, completion: Any, root_service: str, root_category: str) -> float:
+def shaped_easy_reward(completion: Any, commands: list[str], env_reward: float, required: list[str], root_service: str) -> float:
+    text = extract_completion_text(completion)
+    lower = text.lower()
+    pairs = required_pairs(required)
+    required_tools = {tool for tool, _ in pairs}
+    required_services = {service for _, service in pairs}
+    command_set = set(commands)
+    tools_seen = {command.split()[0] for command in commands if command.split()}
+    services_seen = {service for command in commands for service in SERVICES if service in command}
+
+    score = 0.0
+    if "<actions>" in lower and "</actions>" in lower:
+        score += 0.10
+    if commands:
+        score += 0.08
+    if any(command.split()[0] in READ_ONLY_TOOLS for command in commands if command.split()):
+        score += 0.10
+    if root_service in services_seen:
+        score += 0.18
+    elif required_services & services_seen:
+        score += 0.12
+    if required_tools & tools_seen:
+        score += 0.18
+    exact_matches = 0
+    for tool, service in pairs:
+        if f"{tool} {service}" in command_set:
+            exact_matches += 1
+    if pairs:
+        score += 0.28 * (exact_matches / len(pairs))
+    if "declare_resolved" in command_set:
+        score += 0.06
+    if 2 <= len(commands) <= 8:
+        score += 0.04
+    if any(command.startswith("submit_rca") for command in commands):
+        score -= 0.05
+
+    # Keep a connection to the real environment reward, but make the gradient
+    # much denser for early LLM policy learning.
+    score = 0.75 * score + 0.25 * max(0.0, env_reward)
+    return max(-0.1, min(1.0, score))
+
+
+def rollout_reward(task_id: str, completion: Any, root_service: str, root_category: str, required: list[str] | None = None, reward_mode: str = "hard") -> float:
     text = extract_completion_text(completion)
     commands = parse_commands(text)
     if not commands:
@@ -182,12 +308,14 @@ def rollout_reward(task_id: str, completion: Any, root_service: str, root_catego
     obs = env.step(Action(command=f"submit_rca {build_rca(root_service, root_category)}"))
 
     reward = float(obs.reward or 0.0)
+    if reward_mode == "easy":
+        return shaped_easy_reward(completion, commands, reward, required or [], root_service)
     format_bonus = 0.05 if "<actions>" in text.lower() and "</actions>" in text.lower() else 0.0
     concise_bonus = 0.03 if 2 <= len(commands) <= 8 else 0.0
     return max(-0.25, min(1.1, reward + format_bonus + concise_bonus))
 
 
-def evaluate_model(model, tokenizer, task_rows: list[dict[str, Any]], out_path: Path, max_new_tokens: int) -> dict[str, Any]:
+def evaluate_model(model, tokenizer, task_rows: list[dict[str, Any]], out_path: Path, max_new_tokens: int, reward_mode: str = "hard") -> dict[str, Any]:
     import torch
 
     scores: dict[str, float] = {}
@@ -203,7 +331,7 @@ def evaluate_model(model, tokenizer, task_rows: list[dict[str, Any]], out_path: 
                 pad_token_id=tokenizer.eos_token_id,
             )
         completion = tokenizer.decode(output_ids[0][inputs["input_ids"].shape[-1] :], skip_special_tokens=True)
-        reward = rollout_reward(row["task_id"], completion, row["root_service"], row["root_category"])
+        reward = rollout_reward(row["task_id"], completion, row["root_service"], row["root_category"], row.get("required", []), reward_mode)
         scores[row["task_id"]] = reward
         generations[row["task_id"]] = {"completion": completion, "commands": parse_commands(completion), "reward": reward}
     summary = {
@@ -306,6 +434,9 @@ def main() -> None:
     parser.add_argument("--beta", type=float, default=0.02)
     parser.add_argument("--scale-rewards", default="batch")
     parser.add_argument("--loss-type", default="dr_grpo")
+    parser.add_argument("--reward-mode", choices=["hard", "easy"], default="hard")
+    parser.add_argument("--prompt-mode", choices=["hard", "easy"], default="hard")
+    parser.add_argument("--prompt-variants", type=int, default=1)
     parser.add_argument("--logging-steps", type=int, default=5)
     parser.add_argument("--save-steps", type=int, default=100)
     parser.add_argument("--eval-tasks", type=int, default=24)
@@ -321,7 +452,11 @@ def main() -> None:
     start = time.time()
 
     task_ids = load_task_ids(args.curriculum_buffer, args.max_tasks, args.seed)
-    rows = [inspect_task(task_id) for task_id in task_ids]
+    rows = []
+    for task_id in task_ids:
+        for idx in range(max(1, args.prompt_variants)):
+            template = PROMPT_TEMPLATES[idx % len(PROMPT_TEMPLATES)]
+            rows.append(inspect_task(task_id, prompt_mode=args.prompt_mode, template=template))
     random.Random(args.seed).shuffle(rows)
     eval_rows = rows[: min(args.eval_tasks, len(rows))]
 
@@ -366,12 +501,13 @@ def main() -> None:
         # V100 normally uses fp16; keep this only for newer GPUs if the script is reused.
         pass
 
-    baseline = evaluate_model(model, tokenizer, eval_rows, args.out_dir / "baseline_generations.json", args.max_completion_length)
+    baseline = evaluate_model(model, tokenizer, eval_rows, args.out_dir / "baseline_generations.json", args.max_completion_length, args.reward_mode)
 
     def redshift_reward(completions, task_id, root_service, root_category, **kwargs):
+        required = kwargs.get("required", [[] for _ in completions])
         return [
-            rollout_reward(tid, completion, service, category)
-            for completion, tid, service, category in zip(completions, task_id, root_service, root_category)
+            rollout_reward(tid, completion, service, category, req, args.reward_mode)
+            for completion, tid, service, category, req in zip(completions, task_id, root_service, root_category, required)
         ]
 
     train_dataset = Dataset.from_list(rows)
@@ -393,7 +529,7 @@ def main() -> None:
     adapter_dir = args.out_dir / "adapter"
     model.save_pretrained(adapter_dir)
     tokenizer.save_pretrained(adapter_dir)
-    trained = evaluate_model(model, tokenizer, eval_rows, args.out_dir / "trained_generations.json", args.max_completion_length)
+    trained = evaluate_model(model, tokenizer, eval_rows, args.out_dir / "trained_generations.json", args.max_completion_length, args.reward_mode)
 
     summary = {
         "model_name": args.model_name,
@@ -402,6 +538,9 @@ def main() -> None:
         "num_train_tasks": len(rows),
         "num_eval_tasks": len(eval_rows),
         "curriculum_buffer": str(args.curriculum_buffer),
+        "reward_mode": args.reward_mode,
+        "prompt_mode": args.prompt_mode,
+        "prompt_variants": args.prompt_variants,
         "baseline_mean_reward": baseline["mean_reward"],
         "trained_mean_reward": trained["mean_reward"],
         "adapter_dir": str(adapter_dir),

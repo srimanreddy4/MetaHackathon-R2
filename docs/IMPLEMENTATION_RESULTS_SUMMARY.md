@@ -327,10 +327,11 @@ Use these as the clean headline numbers right now:
 Highest priority:
 
 1. Resume or archive the interrupted 600-step Qwen2.5 3B GRPO main run.
-2. Pull Kaggle result artifacts locally.
-3. If the campus 1.5B GRPO run finishes, add its summary beside the Kaggle 3B result.
-4. Update README result tables and plots with final LLM numbers.
-5. Add final submission links: Hugging Face Space, Colab/Kaggle notebook, video, blog, and deck.
+2. Run the separate easy GRPO lane to get a high-scoring shaped-curriculum result.
+3. Pull Kaggle result artifacts locally.
+4. If the campus 1.5B GRPO run finishes, add its summary beside the Kaggle 3B result.
+5. Update README result tables and plots with final LLM numbers.
+6. Add final submission links: Hugging Face Space, Colab/Kaggle notebook, video, blog, and deck.
 
 Optional but valuable:
 
@@ -349,4 +350,3 @@ The project now has two kinds of learning evidence:
 For the submission narrative, the safest claim is:
 
 > Red Shift is a complete OpenEnv SRE training environment with composable rubrics, regret autocurriculum, and GPU-trained defenders. The curriculum symbolic policy improves from roughly 0.55 to 0.91 reward. A real Unsloth Qwen2.5 3B GRPO text-policy run has been validated on Kaggle, improving from 0.2615 to 0.3145 in a smoke run, with a longer checkpointed run reaching roughly 0.35-0.37 logged reward before interruption.
-
