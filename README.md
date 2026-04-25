@@ -19,6 +19,89 @@ tags:
 
 **OnCallEnv Red Shift is an OpenEnv-compatible SRE training environment where a chaos attacker generates incidents, a defender diagnoses them through production-style tools, and a reviewer scores recovery and RCA quality with composable rubrics.**
 
+## Latest Round 2 Checkpoint Results
+
+The current Kaggle easy GRPO run used `unsloth/Qwen2.5-3B-Instruct-bnb-4bit` with easy prompts and shaped partial-credit rewards. The notebook run was manually interrupted at about `220/300` logged steps; because `easy-main` saves every 50 steps, the latest expected saved checkpoint is:
+
+```text
+training_results/unsloth_grpo_qwen3b_easy/checkpoint-200
+```
+
+Captured notebook metrics:
+
+| Run | Status | First logged reward | Last logged reward | Best logged reward | Last clipped ratio |
+| --- | --- | ---: | ---: | ---: | ---: |
+| Easy Qwen2.5-3B GRPO | interrupted around step 220 | 0.6682 | 0.8777 | 0.8817 | 1.0000 |
+
+This result is intentionally reported as an interrupted checkpoint run, not a finished final eval. The full report extracted from the notebook output is in `docs/easy_grpo_interrupted_report.json`.
+
+![Easy GRPO Reward Curve](docs/plots/easy_grpo_qwen3b_reward_curve.png)
+
+![Easy GRPO Checkpoint Results](docs/plots/easy_grpo_qwen3b_checkpoint_results.png)
+
+![Easy GRPO Completion Health](docs/plots/easy_grpo_qwen3b_completion_health.png)
+
+To regenerate the checkpoint report and plots directly inside Kaggle after stopping a run:
+
+```bash
+bash scripts/run_kaggle_qwen3b_grpo.sh easy-summary
+```
+
+That writes:
+
+```text
+training_results/unsloth_grpo_qwen3b_easy/checkpoint_report.json
+docs/plots/easy_grpo_qwen3b_reward_curve.png
+docs/plots/easy_grpo_qwen3b_checkpoint_results.png
+docs/plots/easy_grpo_qwen3b_completion_health.png
+```
+
+For a slower but cleaner checkpoint evaluation that loads the saved LoRA adapter and regenerates the held-out eval completions:
+
+```bash
+bash scripts/run_kaggle_qwen3b_grpo.sh easy-eval-checkpoint
+```
+
+That writes:
+
+```text
+training_results/unsloth_grpo_qwen3b_easy/checkpoint_eval_summary.json
+training_results/unsloth_grpo_qwen3b_easy/checkpoint_generations.json
+```
+
+To download the trained checkpoint/model artifacts from Kaggle, export one archive:
+
+```bash
+bash scripts/run_kaggle_qwen3b_grpo.sh export-easy-artifacts
+```
+
+This creates:
+
+```text
+/kaggle/working/easy_grpo_qwen3b_artifacts.tar.gz
+```
+
+Download that archive and place/extract it under `artifacts/models/`. See `artifacts/README.md` for the exact local commands.
+
+## Interactive ReAct Defender Experiment
+
+The next training lane is an interactive ReAct-style defender. Instead of generating every action at once, the model learns:
+
+```text
+current observation + command history -> one next command
+```
+
+This produces a more realistic learning curve for incident response and directly supports an interactive UI/demo. The runbook is in `docs/INTERACTIVE_REACT_SFT.md`.
+
+Kaggle commands:
+
+```bash
+bash scripts/run_kaggle_qwen3b_grpo.sh react-generate
+bash scripts/run_kaggle_qwen3b_grpo.sh react-sft-smoke
+bash scripts/run_kaggle_qwen3b_grpo.sh react-sft-main
+bash scripts/run_kaggle_qwen3b_grpo.sh export-react-artifacts
+```
+
 ## Why This Exists
 
 Incident response is a messy, partially observable skill. Real on-call engineers do not get a clean multiple-choice prompt; they get noisy alerts, misleading deploy history, scattered logs, and a clock. Red Shift turns that workflow into a fast RL environment: no real Kubernetes, no slow Chaos Mesh cluster, just a deterministic pure-Python microservice simulator that can run thousands of rollouts cheaply.
