@@ -207,6 +207,8 @@ def defender_rollout_reward(
             obs = env.step(Action(command=f"submit_rca {build_rca(root_service, root_category)}"))
             max_reward = max(max_reward, float(obs.reward or 0.0))
 
+    format_bonus = 0.05 if "<actions>" in text.lower() and "</actions>" in text.lower() else 0.0
+    concise_bonus = 0.03 if 2 <= len(commands) <= 8 else 0.0
     raw_reward = max_reward + format_bonus + concise_bonus
     # Shift and scale from [-0.25, 1.1] to [0.0, 1.0]
     norm_reward = (raw_reward + 0.25) / 1.35
