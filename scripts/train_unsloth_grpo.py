@@ -296,7 +296,17 @@ def shaped_easy_reward(completion: Any, commands: list[str], env_reward: float, 
     return max(-0.1, min(1.0, score))
 
 
-def rollout_reward(task_id: str, completion: Any, root_service: str, root_category: str, required: list[str] | None = None, reward_mode: str = "hard") -> float:
+def rollout_reward(
+    task_id: str,
+    completion: Any,
+    root_service: str,
+    root_category: str,
+    required: list[str] | None = None,
+    reward_mode: str = "hard",
+    *,
+    print_completions: bool = False,
+    verbose: bool = False,
+) -> float:
     text = extract_completion_text(completion)
     commands = parse_commands(text)
     if not commands:
@@ -435,7 +445,14 @@ def evaluate_model(model, tokenizer, task_rows: list[dict[str, Any]], out_path: 
                 pad_token_id=tokenizer.eos_token_id,
             )
         completion = tokenizer.decode(output_ids[0][inputs["input_ids"].shape[-1] :], skip_special_tokens=True)
-        reward = rollout_reward(row["task_id"], completion, row["root_service"], row["root_category"], row.get("required", []), reward_mode)
+        reward = rollout_reward(
+            row["task_id"],
+            completion,
+            row["root_service"],
+            row["root_category"],
+            required=row.get("required", []),
+            reward_mode=reward_mode,
+        )
         scores[row["task_id"]] = reward
         generations[row["task_id"]] = {"completion": completion, "commands": parse_commands(completion), "reward": reward}
     summary = {
@@ -624,14 +641,16 @@ def main() -> None:
     curriculum_update_count = {"n": 0}   # counts how many curriculum feedback rounds have run
     curriculum_updates: list[dict[str, Any]] = []
 
-    def redshift_reward(completions, task_id, root_service, root_category, **kwargs):
+    def redshift_reward(completions, task_id, root_service, root_category, required, **kwargs):
         rewards = []
-        for completion, tid, service, category in zip(completions, task_id, root_service, root_category):
+        for completion, tid, service, category, req in zip(completions, task_id, root_service, root_category, required):
             reward = rollout_reward(
                 tid,
                 completion,
                 service,
                 category,
+                required=req,
+                reward_mode=args.reward_mode,
                 print_completions=args.print_completions,
                 verbose=args.verbose,
             )
@@ -677,7 +696,14 @@ def main() -> None:
     adapter_dir = args.out_dir / "adapter"
     model.save_pretrained(adapter_dir)
     tokenizer.save_pretrained(adapter_dir)
-    trained = evaluate_model(model, tokenizer, eval_rows, args.out_dir / "trained_generations.json", args.max_completion_length)
+    trained = evaluate_model(
+        model,
+        tokenizer,
+        eval_rows,
+        args.out_dir / "trained_generations.json",
+        args.max_completion_length,
+        reward_mode=args.reward_mode,
+    )
     if args.dynamic_curriculum and reward_feedback:
         update_info = apply_feedback_to_buffer(args.curriculum_buffer, dict(reward_feedback), verbose=args.verbose)
         if args.curriculum_evolve_iterations > 0:
