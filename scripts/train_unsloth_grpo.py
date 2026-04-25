@@ -217,9 +217,12 @@ def apply_feedback_to_buffer(path: Path, feedback: dict[str, list[float]], *, ve
     buffer = _load_buffer(path)
     by_task = {item.spec.task_id: item for item in buffer.scenarios}
     updated = 0
+    new_solve_rates: list[float] = []
+    all_rewards: list[float] = []
     for task_id, rewards in feedback.items():
         if not rewards:
             continue
+        all_rewards.extend(rewards)
         solve_rate = sum(1 for value in rewards if value >= 0.75) / len(rewards)
         regret = 1.0 - abs(0.5 - solve_rate) * 2.0
         item = by_task.get(task_id)
@@ -229,10 +232,22 @@ def apply_feedback_to_buffer(path: Path, feedback: dict[str, list[float]], *, ve
         item.solve_rate = (item.solve_rate * item.seen_count + solve_rate * len(rewards)) / total_seen
         item.regret = (item.regret * item.seen_count + regret * len(rewards)) / total_seen
         item.seen_count = total_seen
+        new_solve_rates.append(item.solve_rate)
         updated += 1
+        if verbose:
+            print(
+                f"[CURRICULUM_FEEDBACK] task={task_id} "
+                f"solve_rate={item.solve_rate:.3f} regret={item.regret:.3f} "
+                f"seen={item.seen_count} rewards={[round(r, 3) for r in rewards]}"
+            )
     buffer.save(path)
-    if verbose:
-        print(f"[CURRICULUM_FEEDBACK] updated_tasks={updated} path={path}")
+    mean_reward = sum(all_rewards) / len(all_rewards) if all_rewards else 0.0
+    mean_solve_rate = sum(new_solve_rates) / len(new_solve_rates) if new_solve_rates else 0.0
+    print(
+        f"[CURRICULUM_FEEDBACK] updated_tasks={updated} "
+        f"mean_reward={mean_reward:.4f} mean_solve_rate={mean_solve_rate:.3f} "
+        f"buffer_size={len(buffer)} path={path}"
+    )
     return {"updated_tasks": updated, "added_tasks": 0}
 
 

@@ -34,7 +34,7 @@ class ScenarioMutator:
     def __init__(self, rng: random.Random):
         self.rng = rng
 
-    def mutate(self, parent: ScenarioSpec, generation: int) -> ScenarioSpec:
+    def mutate(self, parent: ScenarioSpec, generation: int) -> tuple[ScenarioSpec, str]:
         data = parent.model_dump()
         field = self.rng.choice(
             [
@@ -73,7 +73,7 @@ class ScenarioMutator:
         data["task_id"] = f"evolved_{generation:04d}_{fingerprint}"
         data["seed"] = self.rng.randint(1, 2_000_000_000)
         data["max_steps"] = max(10, min(30, int(data.get("max_steps", 25))))
-        return ScenarioSpec.model_validate(data)
+        return ScenarioSpec.model_validate(data), field
 
     @staticmethod
     def novelty_key(spec: ScenarioSpec) -> tuple:

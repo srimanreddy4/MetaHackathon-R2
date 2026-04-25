@@ -185,7 +185,7 @@ class AutocurriculumRunner:
         seed_specs: list[ScenarioSpec],
         seed: int = 20260424,
         evaluator: DifficultyEvaluator | None = None,
-        max_buffer_size: int = 256,
+        max_buffer_size: int = 12,
     ):
         self.rng = random.Random(seed)
         self.mutator = ScenarioMutator(self.rng)
@@ -204,7 +204,7 @@ class AutocurriculumRunner:
         seed_dir: Path,
         seed: int = 20260424,
         evaluator: DifficultyEvaluator | None = None,
-        max_buffer_size: int = 256,
+        max_buffer_size: int = 12,
     ) -> "AutocurriculumRunner":
         specs = [DEFAULT_SCENARIO]
         if seed_dir.exists():
@@ -223,22 +223,26 @@ class AutocurriculumRunner:
         """
         generation = 0
         attempts = 0
+        added = evicted = skipped_novelty = skipped_variance = 0
+        buf_str = lambda: f"{len(self.buffer)}/{self.max_buffer_size}" if len(self.buffer) < self.max_buffer_size else f"{len(self.buffer)}"
+        print(f"[CURRICULUM_EVOLVE] starting iterations={iterations} buffer={buf_str()}")
         while generation < iterations and attempts < iterations * 20:
             attempts += 1
             parent = self.buffer.sample(self.rng).spec
-            candidate = self.mutator.mutate(parent, generation)
+            candidate, mutated_field = self.mutator.mutate(parent, generation)
             novelty = self.mutator.novelty_key(candidate)
             if novelty in self.archive:
+                skipped_novelty += 1
                 continue
             solve_rate, eval_meta = self._estimate_solve_rate(candidate)
-            variance = solve_rate * (1.0 - solve_rate)  # Bernoulli variance
-            regret = 1.0 - abs(0.5 - solve_rate) * 2.0  # kept for buffer sampling weights
+            variance = solve_rate * (1.0 - solve_rate)
+            regret = 1.0 - abs(0.5 - solve_rate) * 2.0
             new_item = BufferedScenario(spec=candidate, regret=regret, solve_rate=solve_rate)
+            action = "add"
             if len(self.buffer) < self.max_buffer_size:
-                # Buffer has room — always add
                 self.buffer.add(new_item)
+                added += 1
             else:
-                # Find the current worst (lowest variance) evolved entry to potentially evict
                 evolved = [
                     (i, item)
                     for i, item in enumerate(self.buffer.scenarios)
@@ -248,18 +252,35 @@ class AutocurriculumRunner:
                     worst_idx, worst_item = min(evolved, key=lambda t: t[1].solve_rate * (1.0 - t[1].solve_rate))
                     worst_variance = worst_item.solve_rate * (1.0 - worst_item.solve_rate)
                     if variance > worst_variance:
+                        action = f"evict:{worst_item.spec.task_id}(var={worst_variance:.4f})"
                         self.buffer.scenarios[worst_idx] = new_item
+                        evicted += 1
                     else:
-                        continue  # candidate not better — skip, don't count as generation
+                        skipped_variance += 1
+                        continue
                 else:
-                    self.buffer.add(new_item)  # no evolved entries yet, just append
+                    self.buffer.add(new_item)
+                    added += 1
+            print(
+                f"[CURRICULUM_MUTATE] gen={generation:04d} "
+                f"parent={parent.task_id} field={mutated_field} "
+                f"child={candidate.task_id} p={solve_rate:.3f} var={variance:.4f} "
+                f"action={action} buffer={buf_str()}"
+            )
             meta = dict(eval_meta)
             meta["task_id"] = candidate.task_id
             meta["solve_rate"] = solve_rate
             meta["variance"] = variance
+            meta["mutated_field"] = mutated_field
             self.latest_rollout_stats.append(meta)
             self.archive.add(novelty)
             generation += 1
+        print(
+            f"[CURRICULUM_EVOLVE] done generations={generation} attempts={attempts} "
+            f"added={added} evicted={evicted} "
+            f"skipped_novelty={skipped_novelty} skipped_variance={skipped_variance} "
+            f"buffer={buf_str()}"
+        )
         return self.buffer
 
     def _estimate_solve_rate(self, spec: ScenarioSpec) -> tuple[float, dict]:
