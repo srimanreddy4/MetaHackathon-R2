@@ -311,6 +311,7 @@ def main() -> None:
     parser.add_argument("--eval-tasks", type=int, default=24)
     parser.add_argument("--lora-rank", type=int, default=16)
     parser.add_argument("--lora-alpha", type=int, default=32)
+    parser.add_argument("--resume-from-checkpoint", type=Path, default=None)
     parser.add_argument("--seed", type=int, default=20260424)
     args = parser.parse_args()
 
@@ -387,7 +388,7 @@ def main() -> None:
     else:
         trainer_kwargs["tokenizer"] = tokenizer
     trainer = GRPOTrainer(**trainer_kwargs)
-    trainer.train()
+    trainer.train(resume_from_checkpoint=str(args.resume_from_checkpoint) if args.resume_from_checkpoint else None)
 
     adapter_dir = args.out_dir / "adapter"
     model.save_pretrained(adapter_dir)
@@ -406,6 +407,7 @@ def main() -> None:
         "adapter_dir": str(adapter_dir),
         "dataset_path": str(dataset_path),
         "trainable_parameter_report": trainable_report,
+        "resumed_from_checkpoint": str(args.resume_from_checkpoint) if args.resume_from_checkpoint else None,
     }
     (args.out_dir / "summary.json").write_text(json.dumps(summary, indent=2), encoding="utf-8")
     print(json.dumps(summary, indent=2))
