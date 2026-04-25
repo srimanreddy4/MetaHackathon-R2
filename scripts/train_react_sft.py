@@ -24,6 +24,19 @@ def unique_task_ids(rows: list[dict[str, Any]], split: str, limit: int) -> list[
     return task_ids[: min(limit, len(task_ids))]
 
 
+def truncate_token_ids(input_ids: list[int], max_length: int, *, head_tokens: int = 256) -> list[int]:
+    """Keep the instruction prefix and most recent prompt tail within budget."""
+
+    if len(input_ids) <= max_length:
+        return input_ids
+    if max_length <= 0:
+        return []
+    if max_length <= head_tokens:
+        return input_ids[-max_length:]
+    tail_tokens = max_length - head_tokens
+    return input_ids[:head_tokens] + input_ids[-tail_tokens:]
+
+
 def tokenize_dataset(tokenizer, rows: list[dict[str, Any]], max_seq_length: int):
     from datasets import Dataset
 
@@ -32,8 +45,10 @@ def tokenize_dataset(tokenizer, rows: list[dict[str, Any]], max_seq_length: int)
     def tokenize(example):
         prompt_ids = tokenizer(example["prompt"] + "\n", add_special_tokens=False)["input_ids"]
         completion_ids = tokenizer(example["completion"] + tokenizer.eos_token, add_special_tokens=False)["input_ids"]
-        input_ids = (prompt_ids + completion_ids)[:max_seq_length]
-        labels = ([-100] * len(prompt_ids) + completion_ids)[:max_seq_length]
+        max_prompt_tokens = max(1, max_seq_length - len(completion_ids))
+        prompt_ids = truncate_token_ids(prompt_ids, max_prompt_tokens)
+        input_ids = prompt_ids + completion_ids
+        labels = [-100] * len(prompt_ids) + completion_ids
         return {
             "input_ids": input_ids,
             "attention_mask": [1] * len(input_ids),
@@ -61,11 +76,17 @@ class CommandDataCollator:
         return {key: torch.tensor(value, dtype=torch.long) for key, value in batch.items()}
 
 
-def model_command_fn(model, tokenizer, *, max_new_tokens: int):
+def model_command_fn(model, tokenizer, *, max_seq_length: int, max_new_tokens: int):
     import torch
 
     def command_fn(prompt: str, _: int) -> str:
-        inputs = tokenizer(prompt, return_tensors="pt").to(model.device)
+        max_input_tokens = max(1, max_seq_length - max_new_tokens)
+        prompt_ids = tokenizer(prompt, add_special_tokens=False)["input_ids"]
+        prompt_ids = truncate_token_ids(prompt_ids, max_input_tokens)
+        inputs = {
+            "input_ids": torch.tensor([prompt_ids], dtype=torch.long, device=model.device),
+            "attention_mask": torch.ones((1, len(prompt_ids)), dtype=torch.long, device=model.device),
+        }
         with torch.no_grad():
             output_ids = model.generate(
                 **inputs,
@@ -78,9 +99,9 @@ def model_command_fn(model, tokenizer, *, max_new_tokens: int):
     return command_fn
 
 
-def evaluate_next_action(model, tokenizer, rows: list[dict[str, Any]], out_path: Path, *, max_rows: int, max_new_tokens: int) -> dict[str, Any]:
+def evaluate_next_action(model, tokenizer, rows: list[dict[str, Any]], out_path: Path, *, max_rows: int, max_seq_length: int, max_new_tokens: int) -> dict[str, Any]:
     eval_rows = [row for row in rows if row["split"] == "eval"][:max_rows]
-    command_fn = model_command_fn(model, tokenizer, max_new_tokens=max_new_tokens)
+    command_fn = model_command_fn(model, tokenizer, max_seq_length=max_seq_length, max_new_tokens=max_new_tokens)
     examples: list[dict[str, Any]] = []
     correct = 0
     for row in eval_rows:
@@ -108,9 +129,9 @@ def evaluate_next_action(model, tokenizer, rows: list[dict[str, Any]], out_path:
     return summary
 
 
-def evaluate_interactive(model, tokenizer, rows: list[dict[str, Any]], out_path: Path, *, max_tasks: int, max_turns: int, max_new_tokens: int) -> dict[str, Any]:
+def evaluate_interactive(model, tokenizer, rows: list[dict[str, Any]], out_path: Path, *, max_tasks: int, max_turns: int, max_seq_length: int, max_new_tokens: int) -> dict[str, Any]:
     task_ids = unique_task_ids(rows, "eval", max_tasks)
-    command_fn = model_command_fn(model, tokenizer, max_new_tokens=max_new_tokens)
+    command_fn = model_command_fn(model, tokenizer, max_seq_length=max_seq_length, max_new_tokens=max_new_tokens)
     rollouts = [run_interactive_rollout(task_id=task_id, command_fn=command_fn, max_turns=max_turns) for task_id in task_ids]
     summary = {
         "num_tasks": len(rollouts),
@@ -229,6 +250,7 @@ def main() -> None:
         rows,
         args.out_dir / "baseline_next_action.json",
         max_rows=args.eval_action_rows,
+        max_seq_length=args.max_seq_length,
         max_new_tokens=args.max_new_tokens,
     )
     baseline_rollout = evaluate_interactive(
@@ -238,6 +260,7 @@ def main() -> None:
         args.out_dir / "baseline_interactive_rollouts.json",
         max_tasks=args.eval_rollout_tasks,
         max_turns=args.max_turns,
+        max_seq_length=args.max_seq_length,
         max_new_tokens=args.max_new_tokens,
     )
 
@@ -281,6 +304,7 @@ def main() -> None:
         rows,
         args.out_dir / "trained_next_action.json",
         max_rows=args.eval_action_rows,
+        max_seq_length=args.max_seq_length,
         max_new_tokens=args.max_new_tokens,
     )
     trained_rollout = evaluate_interactive(
@@ -290,6 +314,7 @@ def main() -> None:
         args.out_dir / "trained_interactive_rollouts.json",
         max_tasks=args.eval_rollout_tasks,
         max_turns=args.max_turns,
+        max_seq_length=args.max_seq_length,
         max_new_tokens=args.max_new_tokens,
     )
 

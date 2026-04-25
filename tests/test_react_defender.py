@@ -1,6 +1,7 @@
 from pathlib import Path
 
 from react_defender import generate_react_dataset, parse_command, run_interactive_rollout
+from train_react_sft import truncate_token_ids
 
 
 def test_react_dataset_rows_are_turn_level_and_valid():
@@ -43,3 +44,11 @@ def test_scripted_react_expert_rollout_scores_high():
     )
     assert result["reward"] > 0.85
     assert result["actions"][-1] == "declare_resolved"
+
+
+def test_react_prompt_token_truncation_preserves_prefix_and_recent_tail():
+    input_ids = list(range(2000))
+    truncated = truncate_token_ids(input_ids, 1536, head_tokens=256)
+    assert len(truncated) == 1536
+    assert truncated[:256] == list(range(256))
+    assert truncated[-5:] == [1995, 1996, 1997, 1998, 1999]
