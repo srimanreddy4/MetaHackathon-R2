@@ -386,6 +386,11 @@ def main() -> None:
         "reward_funcs": redshift_reward,
         "args": training_args,
         "train_dataset": train_dataset,
+        "generation_kwargs": {
+            "top_p": 0.95,
+            "do_sample": True,
+            "temperature": args.temperature,
+        },
     }
     trainer_params = inspect.signature(GRPOTrainer.__init__).parameters
     if "processing_class" in trainer_params:

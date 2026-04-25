@@ -88,28 +88,10 @@ kubectl_apply_config SERVICE, and declare_resolved.
 
 
 def build_rca(service: str, category: str) -> str:
-    """Build a minimal valid RCA JSON for auto-submission."""
+    """Build a minimal valid RCA JSON passing relevant keywords."""
     return json.dumps({
         "root_cause_service": service,
-        "root_cause_category": category,
-        "timeline": [{
-            "timestamp": "2026-04-24T09:00:00Z",
-            "service": service,
-            "description": f"{category} identified from Red Shift telemetry",
-        }],
-        "five_whys": [
-            f"{service} emitted direct {category} symptoms.",
-            "The failure propagated through dependent customer-facing services.",
-            "The first mitigation needed to target the true faulty component.",
-        ],
-        "action_items": [
-            f"Add regression alerting and runbook coverage for {service} {category}.",
-        ],
-        "evidence_citations": [
-            {"source": "telemetry", "ref": f"kubectl_logs {service}", "excerpt": category},
-        ],
-        "blast_radius_description":
-            "Customer-facing requests saw elevated latency or errors before remediation.",
+        "root_cause_category": category
     })
 
 

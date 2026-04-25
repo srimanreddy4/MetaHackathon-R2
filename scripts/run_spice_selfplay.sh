@@ -40,7 +40,7 @@ python scripts/train_spice_selfplay.py \
   --max-tasks 120 \
   --logging-steps 1 \
   --save-steps 50 \
-  --seed 20260424
-
+  --seed 20260424 
+  
 echo ""
 echo "=== Done. Results in training_results/spice_selfplay/ ==="

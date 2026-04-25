@@ -154,24 +154,26 @@ def selfplay_iteration(
             )
 
             if not is_valid or spec is None:
+                reward_val = challenger_penalty * 0.5 if "set_field" in completion.lower() or "<actions>" in completion.lower() else challenger_penalty
                 attacker_rows.append({
                     "parent": parent.task_id,
                     "completion": completion,
                     "actions": actions,
                     "valid": False,
-                    "reward": challenger_penalty,
+                    "reward": reward_val,
                 })
                 continue
 
             try:
                 compile_scenario(spec)
             except Exception:
+                reward_val = challenger_penalty * 0.5 if "set_field" in completion.lower() or "<actions>" in completion.lower() else challenger_penalty
                 attacker_rows.append({
                     "parent": parent.task_id,
                     "completion": completion,
                     "actions": actions,
                     "valid": False,
-                    "reward": challenger_penalty,
+                    "reward": reward_val,
                 })
                 continue
                 
@@ -542,6 +544,7 @@ def main() -> None:
     parser.add_argument("--lora-rank", type=int, default=16)
     parser.add_argument("--lora-alpha", type=int, default=32)
     parser.add_argument("--seed", type=int, default=20260424)
+    parser.add_argument("--verbose", action="store_true", help="Print sample completions during training")
 
     args = parser.parse_args()
     # Default selfplay_group_size to group_size if not explicitly set
@@ -742,7 +745,12 @@ def main() -> None:
         """
         role = kwargs.get("role")
         rewards = []
-        for idx, completion in enumerate(completions):
+        
+        comps_list = list(completions)
+        if getattr(args, "verbose", False) and comps_list and role and role[0] == "attacker":
+            print(f"\n[VERBOSE] Attacker Sample:\n{comps_list[0]}\n{'-'*40}\n")
+            
+        for idx, completion in enumerate(comps_list):
             r_val = role[idx] if isinstance(role, list) else role
             if r_val != "attacker":
                 rewards.append(0.0)  # neutral mask for defender rows
@@ -752,12 +760,14 @@ def main() -> None:
             parent = next((s for s in parent_specs if s.task_id == pid), parent_specs[0])
             spec, is_valid, _ = parse_attacker_actions(text, parent)
             if not is_valid or spec is None:
-                rewards.append(args.challenger_penalty)
+                r_val = args.challenger_penalty * 0.5 if "set_field" in text.lower() or "<actions>" in text.lower() else args.challenger_penalty
+                rewards.append(r_val)
                 continue
             try:
                 compile_scenario(spec)
             except Exception:
-                rewards.append(args.challenger_penalty)
+                r_val = args.challenger_penalty * 0.5 if "set_field" in text.lower() or "<actions>" in text.lower() else args.challenger_penalty
+                rewards.append(r_val)
                 continue
             # Heuristic complexity proxy
             c = 0.0
@@ -780,7 +790,12 @@ def main() -> None:
         """
         role = kwargs.get("role")
         rewards = []
-        for idx, completion in enumerate(completions):
+
+        comps_list = list(completions)
+        if getattr(args, "verbose", False) and comps_list and role and role[0] == "defender":
+            print(f"\n[VERBOSE] Defender Sample:\n{comps_list[0]}\n{'-'*40}\n")
+            
+        for idx, completion in enumerate(comps_list):
             r_val = role[idx] if isinstance(role, list) else role
             if r_val != "defender":
                 rewards.append(0.0)  # neutral mask for attacker rows
@@ -809,6 +824,11 @@ def main() -> None:
         "reward_funcs": [attacker_reward, defender_reward],
         "args": training_args,
         "train_dataset": train_dataset,
+        "generation_kwargs": {
+            "top_p": 0.95,
+            "do_sample": True,
+            "temperature": args.temperature,
+        },
     }
     trainer_params = inspect.signature(GRPOTrainer.__init__).parameters
     if "processing_class" in trainer_params:
