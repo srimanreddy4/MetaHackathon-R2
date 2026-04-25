@@ -8,6 +8,8 @@ import re
 from pathlib import Path
 from typing import Any
 
+import matplotlib.pyplot as plt
+
 from react_defender import generate_react_dataset, write_jsonl
 from train_react_sft import evaluate_interactive, evaluate_next_action
 
@@ -46,6 +48,49 @@ def ensure_dataset(args) -> list[dict[str, Any]]:
     return rows
 
 
+def plot_checkpoint_results(summary: dict[str, Any], interactive: dict[str, Any], plots_dir: Path, plot_prefix: str) -> list[str]:
+    plots_dir.mkdir(parents=True, exist_ok=True)
+    written: list[str] = []
+
+    labels = ["next-action accuracy", "interactive reward"]
+    values = [
+        float(summary["checkpoint_next_action_accuracy"]),
+        float(summary["checkpoint_interactive_mean_reward"]),
+    ]
+    fig, ax = plt.subplots(figsize=(6.8, 4.4))
+    ax.bar(labels, values, color=["#1565C0", "#2E7D32"])
+    ax.set_ylim(0.0, 1.05)
+    ax.set_ylabel("Score")
+    ax.set_title("Interactive ReAct Checkpoint Evaluation")
+    for idx, value in enumerate(values):
+        ax.text(idx, value + 0.015, f"{value:.3f}", ha="center", fontsize=9)
+    fig.tight_layout()
+    path = plots_dir / f"{plot_prefix}_checkpoint_eval.png"
+    fig.savefig(path, dpi=160)
+    plt.close(fig)
+    written.append(str(path))
+
+    rollouts = interactive.get("rollouts", [])
+    if rollouts:
+        task_labels = [item["task_id"] for item in rollouts]
+        rewards = [float(item["reward"]) for item in rollouts]
+        fig, ax = plt.subplots(figsize=(max(8, len(task_labels) * 0.55), 4.8))
+        ax.bar(range(len(task_labels)), rewards, color="#00897B")
+        ax.set_ylim(0.0, 1.05)
+        ax.set_ylabel("Reward")
+        ax.set_title("Interactive ReAct Held-Out Rollout Rewards")
+        ax.set_xticks(range(len(task_labels)))
+        ax.set_xticklabels(task_labels, rotation=55, ha="right", fontsize=8)
+        ax.axhline(sum(rewards) / len(rewards), color="#C62828", linestyle="--", linewidth=1.4, label=f"mean {sum(rewards) / len(rewards):.3f}")
+        ax.legend()
+        fig.tight_layout()
+        path = plots_dir / f"{plot_prefix}_rollout_rewards.png"
+        fig.savefig(path, dpi=160)
+        plt.close(fig)
+        written.append(str(path))
+    return written
+
+
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--run-dir", type=Path, default=Path("training_results/react_sft_qwen3b"))
@@ -59,6 +104,8 @@ def main() -> None:
     parser.add_argument("--eval-action-rows", type=int, default=80)
     parser.add_argument("--eval-rollout-tasks", type=int, default=20)
     parser.add_argument("--max-turns", type=int, default=10)
+    parser.add_argument("--plots-dir", type=Path, default=Path("docs/plots"))
+    parser.add_argument("--plot-prefix", default="react_sft_qwen3b")
     parser.add_argument("--seed", type=int, default=20260424)
     args = parser.parse_args()
 
@@ -115,6 +162,7 @@ def main() -> None:
         "next_action_path": str(args.run_dir / "checkpoint_next_action.json"),
         "interactive_rollouts_path": str(args.run_dir / "checkpoint_interactive_rollouts.json"),
     }
+    summary["plots"] = plot_checkpoint_results(summary, interactive, args.plots_dir, args.plot_prefix)
     (args.run_dir / "checkpoint_eval_summary.json").write_text(json.dumps(summary, indent=2), encoding="utf-8")
     print(json.dumps(summary, indent=2), flush=True)
 

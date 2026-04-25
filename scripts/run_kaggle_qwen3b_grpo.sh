@@ -129,7 +129,24 @@ case "${MODE}" in
       --max-new-tokens 64 \
       --eval-action-rows 80 \
       --eval-rollout-tasks 20 \
-      --max-turns 10
+      --max-turns 10 \
+      --plots-dir docs/plots \
+      --plot-prefix react_sft_qwen3b
+    ;;
+  react-eval-checkpoint-fast)
+    python scripts/evaluate_react_sft_checkpoint.py \
+      --run-dir training_results/react_sft_qwen3b \
+      --model-name "${MODEL_NAME}" \
+      --curriculum-buffer curriculum_results/buffer.json \
+      --max-tasks 120 \
+      --train-tasks 100 \
+      --max-seq-length 1536 \
+      --max-new-tokens 32 \
+      --eval-action-rows 24 \
+      --eval-rollout-tasks 5 \
+      --max-turns 7 \
+      --plots-dir docs/plots \
+      --plot-prefix react_sft_qwen3b_fast
     ;;
   resume-main)
     shopt -s nullglob
@@ -259,6 +276,7 @@ Usage:
   bash scripts/run_kaggle_qwen3b_grpo.sh react-sft-smoke
   bash scripts/run_kaggle_qwen3b_grpo.sh react-sft-main
   bash scripts/run_kaggle_qwen3b_grpo.sh react-eval-checkpoint
+  bash scripts/run_kaggle_qwen3b_grpo.sh react-eval-checkpoint-fast
   bash scripts/run_kaggle_qwen3b_grpo.sh export-react-artifacts
   bash scripts/run_kaggle_qwen3b_grpo.sh resume-main
   bash scripts/run_kaggle_qwen3b_grpo.sh long
