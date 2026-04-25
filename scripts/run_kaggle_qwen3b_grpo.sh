@@ -64,7 +64,7 @@ case "${MODE}" in
     run_train training_results/unsloth_grpo_qwen3b_smoke 40 50 4 768 512 128 8 50
     ;;
   main)
-    run_train training_results/unsloth_grpo_qwen3b_kaggle 160 600 8 1024 768 192 32 100
+    run_train training_results/unsloth_grpo_qwen3b_kaggle 160 300 8 1024 768 192 32 100
     ;;
   long)
     run_train training_results/unsloth_grpo_qwen3b_kaggle_long 206 1000 8 1024 768 192 48 100
