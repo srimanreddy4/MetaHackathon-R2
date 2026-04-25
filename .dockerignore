@@ -1,9 +1,0 @@
-__pycache__/
-*.pyc
-*.pyo
-.git/
-.gitignore
-.env
-problem_statement.md
-test_env.py
-run_simulation.py
