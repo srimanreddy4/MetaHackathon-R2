@@ -24,6 +24,9 @@ from oncallenv.core.types import Action
 from oncallenv.curriculum import RegretBuffer
 from oncallenv.rewards.sre_shaped import (
     build_sre_prompt,
+    sre_format_score,
+    sre_investigation_score,
+    sre_remediation_score,
     sre_shaped_reward,
 )
 
@@ -208,11 +211,19 @@ def inspect_task(task_id: str, *, prompt_mode: str = "hard", template: str = "st
     }
 
 
-def load_task_ids(curriculum_buffer: Path | None, max_tasks: int | None, seed: int) -> list[str]:
+def load_task_ids(curriculum_buffer: Path | None, max_tasks: int | None, seed: int, max_solve_rate: float | None = None) -> list[str]:
     task_ids = list(SEED_TASKS)
     if curriculum_buffer and curriculum_buffer.exists():
         buffer = RegretBuffer.load(curriculum_buffer)
-        task_ids = list(dict.fromkeys([item.spec.task_id for item in buffer.scenarios]))
+        scenarios = buffer.scenarios
+        if max_solve_rate is not None:
+            hard = [item for item in scenarios if item.solve_rate < max_solve_rate]
+            if hard:
+                print(f"[curriculum] keeping {len(hard)}/{len(scenarios)} scenarios with solve_rate < {max_solve_rate}")
+                scenarios = hard
+            else:
+                print(f"[curriculum] WARN: no scenarios with solve_rate < {max_solve_rate}; using full buffer")
+        task_ids = list(dict.fromkeys([item.spec.task_id for item in scenarios]))
     rng = random.Random(seed)
     rng.shuffle(task_ids)
     if max_tasks:
@@ -457,6 +468,9 @@ def main() -> None:
     parser.add_argument("--reward-mode", choices=["hard", "easy", "sre"], default="hard")
     parser.add_argument("--prompt-mode", choices=["hard", "easy", "sre"], default="hard")
     parser.add_argument("--prompt-variants", type=int, default=1)
+    parser.add_argument("--max-solve-rate", type=float, default=None,
+                        help="If set, only keep curriculum scenarios with solve_rate < this value. "
+                             "Recommended 0.25 for SRE-mode training to avoid trivial tasks.")
     parser.add_argument("--logging-steps", type=int, default=1)
     parser.add_argument("--save-steps", type=int, default=100)
     parser.add_argument("--eval-tasks", type=int, default=24)
@@ -471,7 +485,7 @@ def main() -> None:
     args.out_dir.mkdir(parents=True, exist_ok=True)
     start = time.time()
 
-    task_ids = load_task_ids(args.curriculum_buffer, args.max_tasks, args.seed)
+    task_ids = load_task_ids(args.curriculum_buffer, args.max_tasks, args.seed, args.max_solve_rate)
     rows = []
     for task_id in task_ids:
         for idx in range(max(1, args.prompt_variants)):
@@ -530,11 +544,30 @@ def main() -> None:
             for completion, tid, service, category, req in zip(completions, task_id, root_service, root_category, required)
         ]
 
+    # In SRE mode we expose the 3 disjoint sub-rewards as separate reward funcs
+    # so TRL/W&B logs each one as its own column. The total reward used for the
+    # GRPO policy gradient is the sum across the list, which matches the
+    # original sre_shaped_reward() total exactly (modulo the [-0.6, +1.0] clip
+    # which is applied inside _cached_breakdown via sre_shaped_reward).
+    def sre_format_reward(completions, task_id, **kwargs):
+        return [sre_format_score(extract_completion_text(c), tid) for c, tid in zip(completions, task_id)]
+
+    def sre_investigation_reward(completions, task_id, **kwargs):
+        return [sre_investigation_score(extract_completion_text(c), tid) for c, tid in zip(completions, task_id)]
+
+    def sre_remediation_reward(completions, task_id, **kwargs):
+        return [sre_remediation_score(extract_completion_text(c), tid) for c, tid in zip(completions, task_id)]
+
+    if args.reward_mode == "sre":
+        reward_funcs: Any = [sre_format_reward, sre_investigation_reward, sre_remediation_reward]
+    else:
+        reward_funcs = redshift_reward
+
     train_dataset = Dataset.from_list(rows)
     training_args = make_grpo_config(args)
     trainer_kwargs = {
         "model": model,
-        "reward_funcs": redshift_reward,
+        "reward_funcs": reward_funcs,
         "args": training_args,
         "train_dataset": train_dataset,
     }

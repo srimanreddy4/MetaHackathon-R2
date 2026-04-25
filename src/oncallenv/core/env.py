@@ -104,12 +104,16 @@ class OnCallRedShiftEnv(Environment[Action, Observation, State]):
         if runtime is not None:
             services = runtime.graph.service_names()
             elapsed = runtime.graph.elapsed_sec
+            # Generic frontend page: do NOT leak the true root-cause service or
+            # category. The agent must use investigation tools (kubectl_logs,
+            # kubectl_top, jaeger_search, promql_query, ...) to trace the fault
+            # from the customer-facing edge back to its source.
             alerts = [
                 Alert(
                     alert_id="ALT-RED-001",
                     severity="critical",
-                    service=runtime.graph.root_cause_service,
-                    message=f"{runtime.graph.root_cause_category} symptoms detected with elevated p99/error rate",
+                    service="api-gateway",
+                    message="High latency and elevated error rate detected in customer telemetry",
                     timestamp="2026-04-24T09:00:00Z",
                 )
             ]

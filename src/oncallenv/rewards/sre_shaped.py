@@ -228,23 +228,24 @@ def _service_of(cmd: str) -> str:
     return parts[1].strip() if len(parts) == 2 else ""
 
 
-SRE_SYSTEM_PROMPT = """You are the on-call SRE for a production microservice cluster. You are paged with a critical alert. Diagnose the root cause, investigate before mutating, apply ONE targeted fix, then submit your RCA.
+SRE_SYSTEM_PROMPT = """You are the on-call SRE for a production microservice cluster. You are paged with a critical alert at the customer-facing edge (api-gateway). The alert is generic -- it only tells you that customers are seeing high latency and errors. The true root-cause service is HIDDEN somewhere in the dependency graph (api-gateway -> checkout-service / user-service -> payment-service / inventory-service -> postgres-primary / redis-cache). You must INVESTIGATE to find it, then apply ONE targeted fix, then submit your RCA.
 
 OUTPUT FORMAT (follow exactly, nothing else outside the tags):
 <thought>
-One short paragraph: which service is the likely root cause and why, based on the alert.
+One short paragraph reasoning from the symptom back through the dependency graph: which downstream service is the likely root cause and why, based on what you would expect to see in logs / metrics / traces.
 </thought>
 <actions>
-kubectl_logs SERVICE              # 1) investigate FIRST with read-only probes on the alerting service
-kubectl_top SERVICE               # 2) optional second read-only probe
-kubectl_rollout_restart SERVICE   # 3) ONE targeted mutating fix on the root-cause service
+kubectl_logs SERVICE              # 1) investigate FIRST with read-only probes (try downstream services)
+kubectl_top SERVICE               # 2) optional second read-only probe (e.g. promql_query / jaeger_search)
+kubectl_rollout_restart SERVICE   # 3) ONE targeted mutating fix on the suspected root-cause service
 declare_resolved
-submit_rca SERVICE CATEGORY       # e.g. submit_rca payment-service oom_kill
+submit_rca SERVICE CATEGORY       # fill in the suspected root-cause service and its fault category
 </actions>
 
 RULES:
-- Lead with read-only commands (kubectl_logs, kubectl_top, promql_query, jaeger_search). Do NOT start with a mutating command.
-- Do NOT carpet-bomb the cluster. Mutating commands (kubectl_rollout_restart, kubectl_scale, kubectl_apply_config, traffic_split_update, feature_flag_toggle, kubectl_rollout_undo) MUST target only the affected service. Restarting unrelated services is penalized.
+- Do NOT assume the alerting service (api-gateway) is the root cause. It is the symptom, not the source. Investigate downstream first.
+- Lead with read-only commands (kubectl_logs, kubectl_top, promql_query, jaeger_search, dns_lookup, curl_service). Do NOT start with a mutating command.
+- Do NOT carpet-bomb the cluster. Mutating commands (kubectl_rollout_restart, kubectl_scale, kubectl_apply_config, traffic_split_update, feature_flag_toggle, kubectl_rollout_undo) MUST target only the actually-affected service. Restarting unrelated services is penalized.
 - Always end with declare_resolved followed by submit_rca SERVICE CATEGORY.
 - Pick CATEGORY from: oom_kill, cpu_hog, network_partition, dns_misconfig, replica_lag, cache_stampede, http_503_loop, deadlock, disk_full, cert_expiry, clock_skew, gc_pause.
 """
@@ -260,8 +261,19 @@ def build_sre_prompt(task_id: str, alert_service: str, alert_message: str, servi
     )
 
 
+GENERIC_ALERT_SERVICE = "api-gateway"
+GENERIC_ALERT_MESSAGE = "High latency and elevated error rate detected in customer telemetry"
+
+
 def get_ground_truth(task_id: str) -> dict[str, Any]:
-    """Snapshot the simulator's ground truth for a task without leaking it to the agent."""
+    """Snapshot the simulator's ground truth for a task without leaking it to the agent.
+
+    The advertised alert (service + message) is intentionally generic -- the
+    agent only sees a frontend page and must trace the fault back to the true
+    root-cause service. The hidden truth fields (root_service, root_category,
+    fault_services, required) are used by the reward function to grade
+    correctness AFTER the rollout, never shown to the model.
+    """
     env = OnCallRedShiftEnv()
     env.reset(task_id=task_id)
     graph = env._runtime.graph
@@ -271,8 +283,8 @@ def get_ground_truth(task_id: str) -> dict[str, Any]:
         "root_category": graph.root_cause_category,
         "fault_services": fault_services,
         "required": set(graph.required_remediations),
-        "alert_service": graph.root_cause_service,
-        "alert_message": f"{graph.root_cause_category} symptoms detected with elevated p99/error rate",
+        "alert_service": GENERIC_ALERT_SERVICE,
+        "alert_message": GENERIC_ALERT_MESSAGE,
     }
 
 
@@ -419,3 +431,80 @@ def sre_shaped_reward(
     if return_breakdown:
         return score
     return score.total
+
+
+# ---------------------------------------------------------------------------
+# Granular reward split for TRL/GRPO logging.
+#
+# TRL accepts a list of reward functions and logs each as its own column
+# (rewards/<func_name>/mean). The total reward used for the policy gradient
+# is the SUM across the list. We partition the SRE breakdown into 3 disjoint
+# logical buckets so each shows up as its own training-log column:
+#
+#   sre_format_reward       -- did the model produce well-formed output?
+#   sre_investigation_reward-- did the model investigate before mutating?
+#   sre_remediation_reward  -- did the model remediate the right service and
+#                              produce a correct RCA?
+#
+# Each call to the reward funcs would otherwise re-parse and re-step the env
+# three times for the same completion, so we cache the breakdown by
+# (text, task_id) with an LRU. The cached value is the SREScore dataclass.
+# ---------------------------------------------------------------------------
+
+import functools as _functools
+
+
+@_functools.lru_cache(maxsize=512)
+def _cached_breakdown(text: str, task_id: str) -> SREScore:
+    return sre_shaped_reward(text, task_id, return_breakdown=True)
+
+
+def _format_subscore(score: SREScore) -> float:
+    return (
+        score.thought_format_bonus
+        + score.thought_substance_bonus
+        + score.thought_semantic_bonus
+        + score.actions_format_bonus
+        + score.no_actions_penalty
+        + score.no_commands_penalty
+        + score.truncation_penalty
+        + score.verbose_penalty
+        + score.wrong_category_penalty
+    )
+
+
+def _investigation_subscore(score: SREScore) -> float:
+    return (
+        score.first_cmd_bonus
+        + score.read_only_first_bonus
+        + score.first_targets_root_bonus
+        + score.read_before_mutate_bonus
+        + score.shotgun_penalty
+        + score.early_mutate_penalty
+    )
+
+
+def _remediation_subscore(score: SREScore) -> float:
+    return (
+        score.correct_remediation_bonus
+        + score.declare_resolved_bonus
+        + score.rca_emitted_bonus
+        + score.rca_service_bonus
+        + score.rca_category_bonus
+        + score.no_rca_penalty
+    )
+
+
+def sre_format_score(text: str, task_id: str) -> float:
+    """Format / structure / chain-of-thought sub-reward."""
+    return _format_subscore(_cached_breakdown(text, task_id))
+
+
+def sre_investigation_score(text: str, task_id: str) -> float:
+    """Investigative-behavior sub-reward (read-before-mutate, no shotgun)."""
+    return _investigation_subscore(_cached_breakdown(text, task_id))
+
+
+def sre_remediation_score(text: str, task_id: str) -> float:
+    """Remediation-correctness + RCA-accuracy sub-reward."""
+    return _remediation_subscore(_cached_breakdown(text, task_id))
