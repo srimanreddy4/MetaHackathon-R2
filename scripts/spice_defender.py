@@ -105,33 +105,38 @@ def build_rca(service: str, category: str) -> str:
 
 def parse_commands(text: str, max_commands: int = 10) -> list[str]:
     """Extract simulator commands from LLM output."""
-    match = re.search(r"<actions>(.*?)</actions>", text, flags=re.IGNORECASE | re.DOTALL)
-    body = match.group(1) if match else text
+    # Extract ALL <actions> blocks
+    matches = re.findall(r"<actions>(.*?)(?:</actions>|$)", text, flags=re.IGNORECASE | re.DOTALL)
+    
+    # If no blocks found, use the whole text as a fallback
+    bodies = matches if matches else [text]
+    
     commands: list[str] = []
-    for raw_line in body.splitlines():
-        line = raw_line.strip().strip("-*` ")
-        if not line:
-            continue
-        found = COMMAND_RE.search(line)
-        if not found:
-            continue
-        tool = found.group(1).lower()
-        arg = (found.group(2) or "").strip().strip("'\"`")
-        if tool in MUTATING_TOOLS or tool in {
-            "kubectl_logs", "kubectl_top", "kubectl_describe_pod",
-            "jaeger_search", "dns_lookup", "check_deploy_history",
-            "curl_service", "promql_query", "logql_query", "istioctl_routes",
-        }:
-            service = next((svc for svc in SERVICES if svc in arg or svc in line), "")
-            if not service:
+    for body in bodies:
+        for raw_line in body.splitlines():
+            line = raw_line.strip().strip("-*` ")
+            if not line:
                 continue
-            commands.append(f"{tool} {service}")
-        elif tool == "declare_resolved":
-            commands.append("declare_resolved")
-        else:
-            commands.append(tool)
-        if len(commands) >= max_commands:
-            break
+            found = COMMAND_RE.search(line)
+            if not found:
+                continue
+            tool = found.group(1).lower()
+            arg = (found.group(2) or "").strip().strip("'\"`")
+            if tool in MUTATING_TOOLS or tool in {
+                "kubectl_logs", "kubectl_top", "kubectl_describe_pod",
+                "jaeger_search", "dns_lookup", "check_deploy_history",
+                "curl_service", "promql_query", "logql_query", "istioctl_routes",
+            }:
+                service = next((svc for svc in SERVICES if svc in arg or svc in line), "")
+                if not service:
+                    continue
+                commands.append(f"{tool} {service}")
+            elif tool == "declare_resolved":
+                commands.append("declare_resolved")
+            else:
+                commands.append(tool)
+            if len(commands) >= max_commands:
+                break
     return commands
 
 

@@ -154,30 +154,31 @@ def parse_attacker_actions(
 
     Returns (spec_or_None, is_valid, list_of_applied_actions).
     """
-    # Extract <actions> block
-    match = re.search(r"<actions>(.*?)</actions>", text, flags=re.IGNORECASE | re.DOTALL)
-    body = match.group(1) if match else text
+    # Extract ALL <actions> blocks - resilient to clipping
+    matches = re.findall(r"<actions>(.*?)(?:</actions>|$)", text, flags=re.IGNORECASE | re.DOTALL)
+    bodies = matches if matches else [text]
 
     data = parent_spec.model_dump()
     applied: list[str] = []
 
-    for line in body.splitlines():
-        line = line.strip().strip("-* ")
-        if not line:
-            continue
-        m = SET_FIELD_RE.match(line)
-        if not m:
-            continue
-        field, raw_value = m.group(1), m.group(2)
-        if field not in ATTACKER_VALID_FIELDS:
-            continue
-        value = _coerce_value(field, raw_value)
-        if value is None and field not in (
-            "fault_secondary", "red_herring", "deploy_window", "schema_drift",
-        ):
-            continue  # skip invalid non-optional values
-        data[field] = value
-        applied.append(f"{field}={value}")
+    for body in bodies:
+        for line in body.splitlines():
+            line = line.strip().strip("-* ")
+            if not line:
+                continue
+            m = SET_FIELD_RE.match(line)
+            if not m:
+                continue
+            field, raw_value = m.group(1), m.group(2)
+            if field not in ATTACKER_VALID_FIELDS:
+                continue
+            value = _coerce_value(field, raw_value)
+            if value is None and field not in (
+                "fault_secondary", "red_herring", "deploy_window", "schema_drift",
+            ):
+                continue  # skip invalid non-optional values
+            data[field] = value
+            applied.append(f"{field}={value}")
 
     if not applied:
         return None, False, applied

@@ -762,7 +762,8 @@ def main() -> None:
             if r_val != "attacker":
                 rewards.append(0.0)  # neutral mask for defender rows
                 continue
-            text = completion if isinstance(completion, str) else str(completion)
+            from spice_defender import extract_completion_text
+            text = extract_completion_text(completion)
             pid = _get(kwargs, "parent_task_id", idx)
             parent = next(s for s in parent_specs if s.task_id == pid)
             spec, is_valid, _ = parse_attacker_actions(text, parent)
@@ -807,7 +808,8 @@ def main() -> None:
             if r_val != "defender":
                 rewards.append(0.0)  # neutral mask for attacker rows
                 continue
-            text = completion if isinstance(completion, str) else str(completion)
+            from spice_defender import extract_completion_text
+            text = extract_completion_text(completion)
             spec_dict = _get(kwargs, "spec", idx)
             spec = ScenarioSpec.model_validate(spec_dict)
             try:
