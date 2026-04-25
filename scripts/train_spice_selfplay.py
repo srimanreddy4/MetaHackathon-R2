@@ -755,7 +755,12 @@ def main() -> None:
         comps_list = list(completions)
         r_sample = _get(kwargs, "role", 0)
         if getattr(args, "verbose", False) and comps_list and r_sample == "attacker":
-            print(f"\n[VERBOSE] Attacker Sample:\n{comps_list[0]}\n{'-'*40}\n")
+            from spice_defender import extract_completion_text
+            from llm_attacker import parse_attacker_actions
+            text = extract_completion_text(comps_list[0])
+            _, _, actions = parse_attacker_actions(text, parent_specs[0])
+            print(f"\n[VERBOSE] Attacker Sample:\n{comps_list[0]}")
+            print(f"[APPLIED ACTIONS]: {actions}\n{'-'*40}\n")
             
         for idx, completion in enumerate(comps_list):
             r_val = _get(kwargs, "role", idx)
@@ -801,7 +806,11 @@ def main() -> None:
         
         r_sample = _get(kwargs, "role", 0)
         if getattr(args, "verbose", False) and comps_list and r_sample == "defender":
-            print(f"\n[VERBOSE] Defender Sample:\n{comps_list[0]}\n{'-'*40}\n")
+            from spice_defender import extract_completion_text, parse_commands
+            text = extract_completion_text(comps_list[0])
+            cmds = parse_commands(text)
+            print(f"\n[VERBOSE] Defender Sample:\n{comps_list[0]}")
+            print(f"[PARSED COMMANDS]: {cmds}\n{'-'*40}\n")
             
         for idx, completion in enumerate(comps_list):
             r_val = _get(kwargs, "role", idx)
