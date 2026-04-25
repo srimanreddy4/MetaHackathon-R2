@@ -386,6 +386,9 @@ def make_grpo_config(args):
         "scale_rewards": args.scale_rewards,
         "loss_type": args.loss_type,
         "use_vllm": False,
+        "log_completions": True,
+        "log_on_each_node": True,
+        "disable_tqdm": False,
     }.items():
         try:
             test = dict(kwargs)
@@ -454,7 +457,7 @@ def main() -> None:
     parser.add_argument("--reward-mode", choices=["hard", "easy", "sre"], default="hard")
     parser.add_argument("--prompt-mode", choices=["hard", "easy", "sre"], default="hard")
     parser.add_argument("--prompt-variants", type=int, default=1)
-    parser.add_argument("--logging-steps", type=int, default=5)
+    parser.add_argument("--logging-steps", type=int, default=1)
     parser.add_argument("--save-steps", type=int, default=100)
     parser.add_argument("--eval-tasks", type=int, default=24)
     parser.add_argument("--lora-rank", type=int, default=16)

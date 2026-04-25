@@ -1,27 +1,38 @@
 """Dense, SRE-favoring shaped reward for the Red Shift defender.
 
-The default environment reward is sparse: the agent only sees a single scalar
-once the episode ends. That signal is too coarse for a step-by-step LLM agent
-trained with GRPO -- it cannot tell which command in a sequence helped, hurt,
-or was useless. This module decomposes the reward into dense, behavior-specific
-shaping terms that explicitly reward proper SRE practice:
+This score is *purely behavioral*: it does NOT add the legacy environment
+reward into the total. The legacy rubric is generous (it auto-credits a
+forced declare_resolved + injected RCA), which saturated baseline scores
+near ~0.9 and left no gradient for GRPO to climb. Here every point must be
+earned by the model's own emitted text.
 
-  +0.10  chain-of-thought:   <thought>...</thought> precedes <actions> and is
-                             not a stub
-  +0.05  thought semantics:  the thought mentions a keyword aliased to the true
-                             root-cause category (NLP-grounded credit)
-  +0.05  investigative lead: the first emitted command is a read-only probe
-                             targeting the alerting / root-cause service
-  -0.20  shotgun mutation:   per mutating command issued against a service that
-                             is NOT in the fault graph (capped at -0.60)
-  +0.10  RCA service:        submit_rca names the correct root-cause service
-  +0.10  RCA category exact: submit_rca names the exact root-cause category
-  +0.05  RCA category alias: submit_rca category is in the alias map of truth
-  -0.10  format break:       no parsable <actions> block / no executable cmds
+Bonuses (must be earned):
+  +0.05  format-thought:    <thought>...</thought> tag present
+  +0.05  substantive thought: thought >= 8 words
+  +0.10  format-actions:    <actions>...</actions> tag present and parseable
+  +0.05  first command parsed
+  +0.05  read-only first move
+  +0.10  first move targets the alerting / root-cause service
+  +0.05  read-only probe precedes any mutating command
+  +0.20  correct remediation: a required (tool, service) pair appears verbatim
+  +0.05  declare_resolved emitted
+  +0.05  submit_rca emitted
+  +0.15  submit_rca names the correct root-cause service
+  +0.20  submit_rca names the exact root-cause category
+  +0.08  submit_rca category is an alias of the truth (partial credit)
 
-These bonuses are added to the underlying environment reward (recovery / RCA /
-blast / safety) so a model that simply restarts everything cannot dominate a
-model that diagnoses, investigates, and surgically remediates.
+Penalties (cap baseline behavior):
+  -0.30  no <actions> block at all
+  -0.25  <actions> present but no parseable command
+  -0.15  no submit_rca emitted
+  -0.10  truncated output (no closing </actions>)
+  -0.10  verbose output (>10 commands)
+  -0.15  per mutating command on a non-fault service (cap -0.45)
+  -0.10  mutating command issued before any read-only probe
+  -0.10  thought mentions the WRONG category alias
+
+Final total is clipped to [-0.6, +1.0]. A perfectly behaved trace caps near
++1.0; a baseline LLM that just emits boilerplate sits around 0.0-0.3.
 """
 
 from __future__ import annotations
@@ -78,14 +89,28 @@ TOOL_RE = re.compile(r"\b(" + "|".join(re.escape(t) for t in TOOL_NAMES) + r")\b
 @dataclass
 class SREScore:
     total: float
-    env_reward: float
-    thought_bonus: float = 0.0
+    env_reward: float  # tracked for diagnostics only; NOT added into total
+    thought_format_bonus: float = 0.0
+    thought_substance_bonus: float = 0.0
     thought_semantic_bonus: float = 0.0
-    investigative_bonus: float = 0.0
-    shotgun_penalty: float = 0.0
+    actions_format_bonus: float = 0.0
+    first_cmd_bonus: float = 0.0
+    read_only_first_bonus: float = 0.0
+    first_targets_root_bonus: float = 0.0
+    read_before_mutate_bonus: float = 0.0
+    correct_remediation_bonus: float = 0.0
+    declare_resolved_bonus: float = 0.0
+    rca_emitted_bonus: float = 0.0
     rca_service_bonus: float = 0.0
     rca_category_bonus: float = 0.0
-    format_penalty: float = 0.0
+    no_actions_penalty: float = 0.0
+    no_commands_penalty: float = 0.0
+    no_rca_penalty: float = 0.0
+    truncation_penalty: float = 0.0
+    verbose_penalty: float = 0.0
+    shotgun_penalty: float = 0.0
+    early_mutate_penalty: float = 0.0
+    wrong_category_penalty: float = 0.0
     parsed_commands: list[str] = field(default_factory=list)
     rca_prediction: Optional[tuple[str, str]] = None
     truth: dict[str, Any] = field(default_factory=dict)
@@ -94,13 +119,27 @@ class SREScore:
         return {
             "total": self.total,
             "env_reward": self.env_reward,
-            "thought_bonus": self.thought_bonus,
+            "thought_format_bonus": self.thought_format_bonus,
+            "thought_substance_bonus": self.thought_substance_bonus,
             "thought_semantic_bonus": self.thought_semantic_bonus,
-            "investigative_bonus": self.investigative_bonus,
-            "shotgun_penalty": self.shotgun_penalty,
+            "actions_format_bonus": self.actions_format_bonus,
+            "first_cmd_bonus": self.first_cmd_bonus,
+            "read_only_first_bonus": self.read_only_first_bonus,
+            "first_targets_root_bonus": self.first_targets_root_bonus,
+            "read_before_mutate_bonus": self.read_before_mutate_bonus,
+            "correct_remediation_bonus": self.correct_remediation_bonus,
+            "declare_resolved_bonus": self.declare_resolved_bonus,
+            "rca_emitted_bonus": self.rca_emitted_bonus,
             "rca_service_bonus": self.rca_service_bonus,
             "rca_category_bonus": self.rca_category_bonus,
-            "format_penalty": self.format_penalty,
+            "no_actions_penalty": self.no_actions_penalty,
+            "no_commands_penalty": self.no_commands_penalty,
+            "no_rca_penalty": self.no_rca_penalty,
+            "truncation_penalty": self.truncation_penalty,
+            "verbose_penalty": self.verbose_penalty,
+            "shotgun_penalty": self.shotgun_penalty,
+            "early_mutate_penalty": self.early_mutate_penalty,
+            "wrong_category_penalty": self.wrong_category_penalty,
             "parsed_commands": list(self.parsed_commands),
             "rca_prediction": list(self.rca_prediction) if self.rca_prediction else None,
             "truth": dict(self.truth),
@@ -243,21 +282,27 @@ def sre_shaped_reward(
     truth: Optional[dict[str, Any]] = None,
     *,
     thought_min_words: int = 8,
-    shotgun_per_hit: float = 0.20,
-    shotgun_floor: float = 0.60,
+    shotgun_per_hit: float = 0.15,
+    shotgun_floor: float = 0.45,
+    reward_floor: float = -0.6,
+    reward_cap: float = 1.0,
     return_breakdown: bool = False,
 ) -> Any:
-    """Compute the dense SRE-shaped reward for a model's free-form text output.
+    """Compute the purely behavioral SRE-shaped reward for a model output.
 
-    The function executes the parsed commands inside a fresh OnCallRedShiftEnv,
-    grants the environment's underlying weighted reward, then layers in the
-    behavior-specific shaping bonuses described at the top of this module.
+    The legacy environment reward is computed for diagnostics only -- it is
+    NOT added into the total. Every point in the total comes from the model's
+    own emitted text being structurally and semantically correct. See module
+    docstring for the full rubric.
     """
     if truth is None:
         truth = get_ground_truth(task_id)
 
     thought_text, _actions_body, runnable, rca_pred, has_actions_tag = parse_actions_block(text)
+    fault_services: set[str] = truth["fault_services"]
+    required_pairs: set[str] = truth["required"]
 
+    # Run the env purely to expose env_reward in the breakdown for debugging.
     env = OnCallRedShiftEnv()
     env.reset(task_id=task_id)
     obs = None
@@ -270,57 +315,107 @@ def sre_shaped_reward(
     if rca_pred is not None:
         rca_service, rca_category = rca_pred
         obs = env.step(Action(command=f"submit_rca {_build_rca_json(rca_service, rca_category)}"))
-
     env_reward = float(obs.reward or 0.0) if obs is not None else 0.0
 
-    score = SREScore(total=env_reward, env_reward=env_reward, parsed_commands=list(runnable), rca_prediction=rca_pred, truth=dict(truth))
+    score = SREScore(total=0.0, env_reward=env_reward, parsed_commands=list(runnable), rca_prediction=rca_pred, truth=dict(truth))
 
-    if not has_actions_tag or not runnable:
-        score.format_penalty = -0.10
-
-    if thought_text and len(thought_text.split()) >= thought_min_words:
-        score.thought_bonus = 0.10
-        category = truth["root_category"]
-        aliases = RCA_ALIAS_MAP.get(category, ())
+    # ---- thought formatting ----
+    if thought_text:
+        score.thought_format_bonus = 0.05
+        if len(thought_text.split()) >= thought_min_words:
+            score.thought_substance_bonus = 0.05
         thought_lower = thought_text.lower()
-        if any(alias in thought_lower for alias in aliases):
-            score.thought_semantic_bonus = 0.05
+        true_category = truth["root_category"]
+        true_aliases = RCA_ALIAS_MAP.get(true_category, ())
+        if any(alias in thought_lower for alias in true_aliases):
+            score.thought_semantic_bonus = 0.10
+        else:
+            for other_cat, other_aliases in RCA_ALIAS_MAP.items():
+                if other_cat == true_category:
+                    continue
+                if any(alias in thought_lower for alias in other_aliases):
+                    score.wrong_category_penalty = -0.10
+                    break
 
+    # ---- actions block formatting / structural penalties ----
+    if has_actions_tag:
+        score.actions_format_bonus = 0.10
+    else:
+        score.no_actions_penalty = -0.30
+    if has_actions_tag and not runnable:
+        score.no_commands_penalty = -0.25
+    elif not has_actions_tag and not runnable:
+        score.no_commands_penalty = -0.10  # double-down lightly when nothing parses
+    if "</actions>" not in text.lower():
+        score.truncation_penalty = -0.10
+    if len(runnable) > 10:
+        score.verbose_penalty = -0.10
+
+    # ---- investigation behavior ----
     if runnable:
         first = runnable[0]
-        if _is_read_only(first) and _service_of(first) in truth["fault_services"]:
-            score.investigative_bonus = 0.05
+        score.first_cmd_bonus = 0.05
+        if _is_read_only(first):
+            score.read_only_first_bonus = 0.05
+        if _service_of(first) in fault_services:
+            score.first_targets_root_bonus = 0.10
+        first_mutating_idx = next((i for i, c in enumerate(runnable) if _is_mutating(c)), None)
+        first_read_idx = next((i for i, c in enumerate(runnable) if _is_read_only(c)), None)
+        if first_mutating_idx is not None and first_read_idx is not None and first_read_idx < first_mutating_idx:
+            score.read_before_mutate_bonus = 0.05
+        if first_mutating_idx is not None and (first_read_idx is None or first_read_idx > first_mutating_idx):
+            score.early_mutate_penalty = -0.10
 
-    fault_services: set[str] = truth["fault_services"]
-    shotgun_hits = 0
-    for cmd in runnable:
-        if _is_mutating(cmd):
-            svc = _service_of(cmd)
-            if svc and svc not in fault_services:
-                shotgun_hits += 1
+    # ---- correct remediation ----
+    if required_pairs:
+        normalized = {f"{cmd.split(' ', 1)[0].lower()}:{_service_of(cmd)}" for cmd in runnable if _is_mutating(cmd)}
+        if normalized & required_pairs:
+            score.correct_remediation_bonus = 0.20
+
+    # ---- shotgun mutations on non-fault services ----
+    shotgun_hits = sum(1 for cmd in runnable if _is_mutating(cmd) and _service_of(cmd) and _service_of(cmd) not in fault_services)
     score.shotgun_penalty = -min(shotgun_floor, shotgun_per_hit * shotgun_hits)
 
-    if rca_pred is not None:
+    # ---- declare_resolved + RCA emission ----
+    if any(cmd == "declare_resolved" for cmd in runnable):
+        score.declare_resolved_bonus = 0.05
+    if rca_pred is None:
+        score.no_rca_penalty = -0.15
+    else:
+        score.rca_emitted_bonus = 0.05
         pred_service, pred_category = rca_pred
         if pred_service == truth["root_service"]:
-            score.rca_service_bonus = 0.10
+            score.rca_service_bonus = 0.15
         true_category = truth["root_category"]
         if pred_category == true_category:
-            score.rca_category_bonus = 0.10
+            score.rca_category_bonus = 0.20
         elif pred_category in RCA_ALIAS_MAP.get(true_category, ()):
-            score.rca_category_bonus = 0.05
+            score.rca_category_bonus = 0.08
 
     total = (
-        env_reward
-        + score.thought_bonus
+        score.thought_format_bonus
+        + score.thought_substance_bonus
         + score.thought_semantic_bonus
-        + score.investigative_bonus
-        + score.shotgun_penalty
+        + score.actions_format_bonus
+        + score.first_cmd_bonus
+        + score.read_only_first_bonus
+        + score.first_targets_root_bonus
+        + score.read_before_mutate_bonus
+        + score.correct_remediation_bonus
+        + score.declare_resolved_bonus
+        + score.rca_emitted_bonus
         + score.rca_service_bonus
         + score.rca_category_bonus
-        + score.format_penalty
+        + score.no_actions_penalty
+        + score.no_commands_penalty
+        + score.no_rca_penalty
+        + score.truncation_penalty
+        + score.verbose_penalty
+        + score.shotgun_penalty
+        + score.early_mutate_penalty
+        + score.wrong_category_penalty
     )
-    score.total = max(-0.5, min(1.5, total))
+    score.total = max(reward_floor, min(reward_cap, total))
     if return_breakdown:
         return score
     return score.total
