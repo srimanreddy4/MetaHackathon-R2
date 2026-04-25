@@ -69,6 +69,20 @@ training_results/unsloth_grpo_qwen3b_easy/checkpoint_eval_summary.json
 training_results/unsloth_grpo_qwen3b_easy/checkpoint_generations.json
 ```
 
+To download the trained checkpoint/model artifacts from Kaggle, export one archive:
+
+```bash
+bash scripts/run_kaggle_qwen3b_grpo.sh export-easy-artifacts
+```
+
+This creates:
+
+```text
+/kaggle/working/easy_grpo_qwen3b_artifacts.tar.gz
+```
+
+Download that archive and place/extract it under `artifacts/models/`. See `artifacts/README.md` for the exact local commands.
+
 ## Why This Exists
 
 Incident response is a messy, partially observable skill. Real on-call engineers do not get a clean multiple-choice prompt; they get noisy alerts, misleading deploy history, scattered logs, and a clock. Red Shift turns that workflow into a fast RL environment: no real Kubernetes, no slow Chaos Mesh cluster, just a deterministic pure-Python microservice simulator that can run thousands of rollouts cheaply.

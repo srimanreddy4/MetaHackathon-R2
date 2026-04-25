@@ -103,6 +103,47 @@ case "${MODE}" in
     tar -czf /kaggle/working/qwen3b_grpo_results.tar.gz "${result_dirs[@]}"
     ls -lh /kaggle/working/qwen3b_grpo_results.tar.gz
     ;;
+  export-easy-artifacts)
+    shopt -s nullglob
+    easy_run="training_results/unsloth_grpo_qwen3b_easy"
+    if [[ ! -d "${easy_run}" ]]; then
+      echo "Missing ${easy_run}. Run easy-main first, or restore the Kaggle working directory." >&2
+      exit 1
+    fi
+    latest_checkpoint=""
+    checkpoints=("${easy_run}"/checkpoint-*)
+    if (( ${#checkpoints[@]} > 0 )); then
+      latest_checkpoint="$(printf '%s\n' "${checkpoints[@]}" | sort -V | tail -1)"
+      echo "Latest checkpoint: ${latest_checkpoint}"
+    fi
+
+    python scripts/summarize_unsloth_grpo.py \
+      "${easy_run}" \
+      --write-report \
+      --plots-dir docs/plots \
+      --plot-prefix easy_grpo_qwen3b
+
+    manifest="/kaggle/working/easy_grpo_qwen3b_artifact_manifest.txt"
+    {
+      echo "OnCallEnv Red Shift Easy GRPO artifact export"
+      echo "created_at=$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+      echo "model=${MODEL_NAME}"
+      echo "run_dir=${easy_run}"
+      echo "latest_checkpoint=${latest_checkpoint:-none}"
+      echo
+      find "${easy_run}" -maxdepth 2 -type f | sort
+      find docs/plots -maxdepth 1 -type f -name 'easy_grpo_qwen3b_*.png' | sort
+      [[ -f docs/easy_grpo_interrupted_report.json ]] && echo docs/easy_grpo_interrupted_report.json
+    } > "${manifest}"
+
+    tar -czf /kaggle/working/easy_grpo_qwen3b_artifacts.tar.gz \
+      "${easy_run}" \
+      docs/easy_grpo_interrupted_report.json \
+      docs/plots/easy_grpo_qwen3b_*.png \
+      "${manifest}"
+    ls -lh /kaggle/working/easy_grpo_qwen3b_artifacts.tar.gz
+    echo "Download from Kaggle: /kaggle/working/easy_grpo_qwen3b_artifacts.tar.gz"
+    ;;
   summary)
     python scripts/summarize_unsloth_grpo.py training_results/unsloth_grpo_qwen3b_kaggle
     ;;
@@ -139,6 +180,7 @@ Usage:
   bash scripts/run_kaggle_qwen3b_grpo.sh summary
   bash scripts/run_kaggle_qwen3b_grpo.sh easy-summary
   bash scripts/run_kaggle_qwen3b_grpo.sh easy-eval-checkpoint
+  bash scripts/run_kaggle_qwen3b_grpo.sh export-easy-artifacts
   bash scripts/run_kaggle_qwen3b_grpo.sh archive
 EOF
     exit 2
