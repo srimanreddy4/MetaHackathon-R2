@@ -49,9 +49,6 @@ run_train() {
     --curriculum-evolve-iterations "${CURRICULUM_EVOLVE_ITERATIONS:-10}" \
     --curriculum-evolve-warmup-steps "${CURRICULUM_EVOLVE_WARMUP_STEPS:-75}" \
     --curriculum-evolve-frequency "${CURRICULUM_EVOLVE_FREQUENCY:-2}" \
-    --print-completions \
-    --verbose \
-
 }
 
 case "${MODE}" in
