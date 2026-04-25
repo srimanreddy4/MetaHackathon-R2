@@ -118,6 +118,19 @@ case "${MODE}" in
       --save-steps 50 \
       --logging-steps 5
     ;;
+  react-eval-checkpoint)
+    python scripts/evaluate_react_sft_checkpoint.py \
+      --run-dir training_results/react_sft_qwen3b \
+      --model-name "${MODEL_NAME}" \
+      --curriculum-buffer curriculum_results/buffer.json \
+      --max-tasks 120 \
+      --train-tasks 100 \
+      --max-seq-length 1536 \
+      --max-new-tokens 64 \
+      --eval-action-rows 80 \
+      --eval-rollout-tasks 20 \
+      --max-turns 10
+    ;;
   resume-main)
     shopt -s nullglob
     checkpoints=(training_results/unsloth_grpo_qwen3b_kaggle/checkpoint-*)
@@ -245,6 +258,7 @@ Usage:
   bash scripts/run_kaggle_qwen3b_grpo.sh react-generate
   bash scripts/run_kaggle_qwen3b_grpo.sh react-sft-smoke
   bash scripts/run_kaggle_qwen3b_grpo.sh react-sft-main
+  bash scripts/run_kaggle_qwen3b_grpo.sh react-eval-checkpoint
   bash scripts/run_kaggle_qwen3b_grpo.sh export-react-artifacts
   bash scripts/run_kaggle_qwen3b_grpo.sh resume-main
   bash scripts/run_kaggle_qwen3b_grpo.sh long

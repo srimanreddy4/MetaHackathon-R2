@@ -99,7 +99,36 @@ Kaggle commands:
 bash scripts/run_kaggle_qwen3b_grpo.sh react-generate
 bash scripts/run_kaggle_qwen3b_grpo.sh react-sft-smoke
 bash scripts/run_kaggle_qwen3b_grpo.sh react-sft-main
+bash scripts/run_kaggle_qwen3b_grpo.sh react-eval-checkpoint
 bash scripts/run_kaggle_qwen3b_grpo.sh export-react-artifacts
+```
+
+Current interrupted ReAct SFT result:
+
+| Run | Status | Saved checkpoint | First logged loss | Last logged loss | Best logged loss |
+| --- | --- | --- | ---: | ---: | ---: |
+| Interactive ReAct SFT Qwen2.5-3B | stopped around step 80/100 | `checkpoint-50` | 4.0684 | 0.0570 | 0.0184 |
+
+The loss curve shows clear next-command learning. The full partial report extracted from the notebook output is in `docs/react_sft_interrupted_report.json`.
+
+![Interactive ReAct SFT Loss Curve](docs/plots/react_sft_qwen3b_partial_loss_curve.png)
+
+![Interactive ReAct SFT Loss Summary](docs/plots/react_sft_qwen3b_partial_loss_summary.png)
+
+![Interactive ReAct SFT Grad Norm](docs/plots/react_sft_qwen3b_partial_grad_norm.png)
+
+To score the saved checkpoint on held-out interactive rollouts inside Kaggle:
+
+```bash
+bash scripts/run_kaggle_qwen3b_grpo.sh react-eval-checkpoint
+```
+
+That writes:
+
+```text
+training_results/react_sft_qwen3b/checkpoint_eval_summary.json
+training_results/react_sft_qwen3b/checkpoint_next_action.json
+training_results/react_sft_qwen3b/checkpoint_interactive_rollouts.json
 ```
 
 ## Why This Exists
