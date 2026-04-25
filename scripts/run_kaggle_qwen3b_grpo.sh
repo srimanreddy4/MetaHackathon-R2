@@ -66,14 +66,14 @@ case "${MODE}" in
     ;;
   easy-smoke)
     EXTRA_ARGS=(--reward-mode easy --prompt-mode easy --prompt-variants 2)
-    run_train training_results/unsloth_grpo_qwen3b_easy_smoke 40 50 4 768 512 128 8 50 "${EXTRA_ARGS[@]}"
+    run_train training_results/unsloth_grpo_qwen3b_easy_smoke 40 50 4 1024 640 256 8 50 "${EXTRA_ARGS[@]}"
     ;;
   main)
     run_train training_results/unsloth_grpo_qwen3b_kaggle 160 600 8 1024 768 192 32 100
     ;;
   easy-main)
     EXTRA_ARGS=(--reward-mode easy --prompt-mode easy --prompt-variants 3)
-    run_train training_results/unsloth_grpo_qwen3b_easy 120 300 8 1024 768 192 32 50 "${EXTRA_ARGS[@]}"
+    run_train training_results/unsloth_grpo_qwen3b_easy 120 300 8 1280 768 256 32 50 "${EXTRA_ARGS[@]}"
     ;;
   resume-main)
     shopt -s nullglob

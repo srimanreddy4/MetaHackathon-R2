@@ -126,17 +126,18 @@ Critical alert: {alert_service} reports {alert_message}
 Available services: {", ".join(services)}
 Available tools: {", ".join(tools)}
 
-Return only a short action plan. Put one simulator command per line inside:
+Return only the XML action block below. Put one simulator command per line inside:
 <actions>
 ...
 </actions>
+Stop immediately after the closing </actions> tag.
 
 Use real commands such as kubectl_logs SERVICE, promql_query SERVICE,
 jaeger_search SERVICE, kubectl_rollout_restart SERVICE,
 kubectl_rollout_undo SERVICE, kubectl_scale SERVICE,
 feature_flag_toggle SERVICE, traffic_split_update SERVICE,
 kubectl_apply_config SERVICE, and declare_resolved.
-Do not include prose outside the tags.
+Do not include explanations, markdown, bullets, JSON, RCA text, or prose outside the tags.
 """
     if prompt_mode == "hard":
         return base
@@ -148,18 +149,21 @@ Do not include prose outside the tags.
             base
             + f"\nTraining runbook hint: suspected faulty service is {root_service}. "
             + f"Fault family is {root_category}. {hint}. "
-            + f"Accepted remediation command for this easy curriculum item: {accepted}.\n"
+            + f"Accepted remediation command for this easy curriculum item: {accepted}. "
+            + "A good answer is exactly 3-5 command lines and ends with </actions>.\n"
         )
     if template == "triage":
         return (
             base
             + f"\nEasy triage hints: first inspect {root_service}; then apply the remediation matching {root_category}; "
-            + f"then declare_resolved. Gold remediation: {accepted}.\n"
+            + f"then declare_resolved. Gold remediation: {accepted}. "
+            + "A good answer is exactly 3-5 command lines and ends with </actions>.\n"
         )
     return (
         base
         + f"\nEasy-mode hints: root service = {root_service}; fault = {root_category}; "
-        + f"best remediation = {accepted}. Include declare_resolved after the fix.\n"
+        + f"best remediation = {accepted}. Include declare_resolved after the fix. "
+        + "A good answer is exactly 3-5 command lines and ends with </actions>.\n"
     )
 
 
