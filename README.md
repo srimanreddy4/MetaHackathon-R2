@@ -83,54 +83,6 @@ This creates:
 
 Download that archive and place/extract it under `artifacts/models/`. See `artifacts/README.md` for the exact local commands.
 
-## Interactive ReAct Defender Experiment
-
-The next training lane is an interactive ReAct-style defender. Instead of generating every action at once, the model learns:
-
-```text
-current observation + command history -> one next command
-```
-
-This produces a more realistic learning curve for incident response and directly supports an interactive UI/demo. The runbook is in `docs/INTERACTIVE_REACT_SFT.md`.
-
-Kaggle commands:
-
-```bash
-bash scripts/run_kaggle_qwen3b_grpo.sh react-generate
-bash scripts/run_kaggle_qwen3b_grpo.sh react-sft-smoke
-bash scripts/run_kaggle_qwen3b_grpo.sh react-sft-main
-bash scripts/run_kaggle_qwen3b_grpo.sh react-eval-checkpoint
-bash scripts/run_kaggle_qwen3b_grpo.sh export-react-artifacts
-```
-
-Current ReAct SFT checkpoint result:
-
-| Run | Checkpoint | Eval action rows | Eval rollout tasks | Next-action accuracy | Interactive mean reward |
-| --- | --- | ---: | ---: | ---: | ---: |
-| Interactive ReAct SFT Qwen2.5-3B | `checkpoint-100` | 24 | 5 | 0.9583 | 0.8068 |
-
-This is the key ReAct result: the model is learning a stepwise SRE workflow, where every generated command receives a new observation before the next command is chosen. The full checkpoint report extracted from the notebook output is in `docs/react_sft_checkpoint_eval_report.json`.
-
-![Interactive ReAct Checkpoint Evaluation](docs/plots/react_sft_qwen3b_fast_checkpoint_eval.png)
-
-![Interactive ReAct Rollout Reward](docs/plots/react_sft_qwen3b_fast_rollout_rewards.png)
-
-Training loss still confirms the warm-start behaved correctly, but it is secondary to the reward/rollout result. The partial loss-only report remains in `docs/react_sft_interrupted_report.json` for audit history.
-
-To score the saved checkpoint on held-out interactive rollouts inside Kaggle:
-
-```bash
-bash scripts/run_kaggle_qwen3b_grpo.sh react-eval-checkpoint
-```
-
-That writes:
-
-```text
-training_results/react_sft_qwen3b/checkpoint_eval_summary.json
-training_results/react_sft_qwen3b/checkpoint_next_action.json
-training_results/react_sft_qwen3b/checkpoint_interactive_rollouts.json
-```
-
 ## Why This Exists
 
 Incident response is a messy, partially observable skill. Real on-call engineers do not get a clean multiple-choice prompt; they get noisy alerts, misleading deploy history, scattered logs, and a clock. Red Shift turns that workflow into a fast RL environment: no real Kubernetes, no slow Chaos Mesh cluster, just a deterministic pure-Python microservice simulator that can run thousands of rollouts cheaply.
