@@ -425,6 +425,8 @@ def main() -> None:
     parser.add_argument("--dynamic-curriculum", action="store_true")
     parser.add_argument("--curriculum-update-every", type=int, default=100)
     parser.add_argument("--curriculum-evolve-iterations", type=int, default=0)
+    parser.add_argument("--curriculum-evolve-warmup-steps", type=int, default=75)
+    parser.add_argument("--curriculum-evolve-frequency", type=int, default=2)
     parser.add_argument("--difficulty-source", choices=["feedback", "llm_inference"], default="feedback")
     parser.add_argument("--rollouts-per-candidate", type=int, default=3)
     parser.add_argument("--curriculum-defender-model", default=None)
@@ -486,6 +488,8 @@ def main() -> None:
     baseline = evaluate_model(model, tokenizer, eval_rows, args.out_dir / "baseline_generations.json", args.max_completion_length)
     reward_feedback: dict[str, list[float]] = defaultdict(list)
     reward_counter = {"count": 0}
+    step_counter = {"count": 0}          # tracks total rollout calls (≈ training steps)
+    curriculum_update_count = {"n": 0}   # counts how many curriculum feedback rounds have run
     curriculum_updates: list[dict[str, Any]] = []
 
     def redshift_reward(completions, task_id, root_service, root_category, **kwargs):
@@ -503,12 +507,22 @@ def main() -> None:
             if args.dynamic_curriculum:
                 reward_feedback[tid].append(reward)
                 reward_counter["count"] += 1
+        step_counter["count"] += 1
         if args.dynamic_curriculum and reward_counter["count"] >= max(1, args.curriculum_update_every):
             update_info = apply_feedback_to_buffer(args.curriculum_buffer, dict(reward_feedback), verbose=args.verbose)
             reward_feedback.clear()
             reward_counter["count"] = 0
-            if args.curriculum_evolve_iterations > 0:
+            curriculum_update_count["n"] += 1
+            n = curriculum_update_count["n"]
+            step = step_counter["count"]
+            warmup_done = step >= args.curriculum_evolve_warmup_steps
+            on_cycle = (n % max(1, args.curriculum_evolve_frequency)) == 0
+            if args.curriculum_evolve_iterations > 0 and warmup_done and on_cycle:
+                print(f"[CURRICULUM_GATE] step={step} update={n} → evolving (warmup={args.curriculum_evolve_warmup_steps} freq={args.curriculum_evolve_frequency})")
                 update_info.update(evolve_curriculum(args, verbose=args.verbose))
+            elif args.curriculum_evolve_iterations > 0:
+                reason = "warmup" if not warmup_done else f"freq (every {args.curriculum_evolve_frequency})"
+                print(f"[CURRICULUM_GATE] step={step} update={n} → skipping evolution ({reason})")
             curriculum_updates.append(update_info)
         return rewards
 

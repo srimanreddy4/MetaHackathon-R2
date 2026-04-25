@@ -197,6 +197,22 @@ class AutocurriculumRunner:
         self.archive = {self.mutator.novelty_key(spec) for spec in seed_specs}
         self.evaluator = evaluator if evaluator is not None else RandomPolicyEvaluator(seed=seed)
         self.latest_rollout_stats: list[dict] = []
+        self._prune_buffer()
+
+    def _prune_buffer(self):
+        if len(self.buffer) <= self.max_buffer_size:
+            return
+        # Keep all seed tasks (those not prefixed with evolved_)
+        seeds = [s for s in self.buffer.scenarios if not s.spec.task_id.startswith("evolved_")]
+        evolved = [s for s in self.buffer.scenarios if s.spec.task_id.startswith("evolved_")]
+        # Sort evolved by variance descending (highest p*(1-p) first)
+        evolved.sort(key=lambda s: s.solve_rate * (1.0 - s.solve_rate), reverse=True)
+        # Fill remaining slots with top evolved tasks
+        slots_for_evolved = max(0, self.max_buffer_size - len(seeds))
+        kept_evolved = evolved[:slots_for_evolved]
+        before = len(self.buffer)
+        self.buffer.scenarios = seeds + kept_evolved
+        print(f"[CURRICULUM_PRUNE] buffer shrunk {before} -> {len(self.buffer)} (kept {len(seeds)} seeds, {len(kept_evolved)} top evolved)")
 
     @classmethod
     def from_seed_dir(
@@ -224,6 +240,7 @@ class AutocurriculumRunner:
         generation = 0
         attempts = 0
         added = evicted = skipped_novelty = skipped_variance = 0
+        self._prune_buffer()
         buf_str = lambda: f"{len(self.buffer)}/{self.max_buffer_size}" if len(self.buffer) < self.max_buffer_size else f"{len(self.buffer)}"
         print(f"[CURRICULUM_EVOLVE] starting iterations={iterations} buffer={buf_str()}")
         while generation < iterations and attempts < iterations * 20:

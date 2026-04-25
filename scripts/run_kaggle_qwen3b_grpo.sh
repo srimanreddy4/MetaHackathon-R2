@@ -45,8 +45,10 @@ run_train() {
     --difficulty-source "${DIFFICULTY_SOURCE:-feedback}" \
     --rollouts-per-candidate "${ROLLOUTS_PER_CANDIDATE:-3}" \
     --dynamic-curriculum \
-    --curriculum-update-every "${CURRICULUM_UPDATE_EVERY:-50}" \
+    --curriculum-update-every "${CURRICULUM_UPDATE_EVERY:-40}" \
     --curriculum-evolve-iterations "${CURRICULUM_EVOLVE_ITERATIONS:-10}" \
+    --curriculum-evolve-warmup-steps "${CURRICULUM_EVOLVE_WARMUP_STEPS:-75}" \
+    --curriculum-evolve-frequency "${CURRICULUM_EVOLVE_FREQUENCY:-2}" \
     --print-completions \
     --verbose \
 
