@@ -576,6 +576,36 @@ def main() -> None:
     else:
         trainer_kwargs["tokenizer"] = tokenizer
     trainer = GRPOTrainer(**trainer_kwargs)
+
+    from transformers import TrainerCallback
+    class PlottingCallback(TrainerCallback):
+        def on_save(self, args, state, control, **kwargs):
+            history = state.log_history
+            steps = []
+            rewards = []
+            for entry in history:
+                if "reward" in entry and "step" in entry:
+                    steps.append(entry["step"])
+                    rewards.append(entry["reward"])
+            if steps:
+                try:
+                    import matplotlib.pyplot as plt
+                    plt.figure(figsize=(10, 6))
+                    plt.plot(steps, rewards, marker='o', label="Mean Reward", color="blue")
+                    plt.title("GRPO Reward Progression")
+                    plt.xlabel("Step")
+                    plt.ylabel("Reward")
+                    plt.grid(True)
+                    plt.legend()
+                    out_file = Path(args.output_dir) / f"reward_curve_step_{state.global_step}.png"
+                    plt.savefig(out_file)
+                    plt.close()
+                    print(f"\\n[Plot] Saved live training graph to {out_file}")
+                except ImportError:
+                    pass
+
+    trainer.add_callback(PlottingCallback())
+
     trainer.train(resume_from_checkpoint=str(args.resume_from_checkpoint) if args.resume_from_checkpoint else None)
 
     adapter_dir = args.out_dir / "adapter"
