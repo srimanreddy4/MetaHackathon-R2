@@ -64,13 +64,24 @@ def resolve_run_dir(run_dir: Path, artifact_archive: Path | None, extract_dir: P
             Path("/kaggle/input/datasets/srimanreddy/artifacts/models/easy_grpo_qwen3b_artifacts.tar.gz"),
         ]
     )
+    kaggle_input = Path("/kaggle/input")
+    if kaggle_input.exists():
+        candidate_archives.extend(kaggle_input.glob("**/easy_grpo_qwen3b_artifacts.tar.gz"))
 
+    seen: set[str] = set()
+    deduped_archives: list[Path] = []
     for archive in candidate_archives:
+        key = str(archive)
+        if key not in seen:
+            deduped_archives.append(archive)
+            seen.add(key)
+
+    for archive in deduped_archives:
         extracted = maybe_extract_artifact(archive, extract_dir)
         if extracted and any(extracted.glob("checkpoint-*")):
             return extracted
 
-    searched = ", ".join(str(path) for path in candidate_archives)
+    searched = ", ".join(str(path) for path in deduped_archives)
     raise FileNotFoundError(
         f"Could not find checkpoints under {run_dir} and could not extract an artifact archive. "
         f"Searched archives: {searched}"
