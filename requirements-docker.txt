@@ -1,0 +1,14 @@
+openenv-core>=0.2.0
+fastapi>=0.104.0
+uvicorn>=0.24.0
+pydantic>=2.5.0
+requests>=2.31.0
+pyyaml>=6.0.0
+openai>=1.6.0
+accelerate>=1.4.0
+
+torch
+transformers>=4.51.0
+peft>=0.14.0
+bitsandbytes>=0.45.0
+

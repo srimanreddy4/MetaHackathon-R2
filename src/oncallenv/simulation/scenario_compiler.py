@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from oncallenv.core.types import ScenarioSpec
+from models import ScenarioSpec
 from oncallenv.simulation.faults import FAULTS
 from oncallenv.simulation.graph import MicroserviceGraph
 

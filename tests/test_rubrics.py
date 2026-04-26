@@ -1,7 +1,7 @@
 import json
 
 from oncallenv import OnCallRedShiftEnv
-from oncallenv.core.types import Action
+from models import Action
 
 
 def _rca(service="payment-service", category="oom_kill"):

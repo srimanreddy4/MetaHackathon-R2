@@ -1,5 +1,5 @@
 from oncallenv import OnCallRedShiftEnv
-from oncallenv.core.types import Action, Observation, State
+from models import Action, Observation, State
 
 
 def test_gym_style_api_contract():

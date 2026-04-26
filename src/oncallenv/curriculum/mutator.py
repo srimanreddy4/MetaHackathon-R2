@@ -5,7 +5,7 @@ from __future__ import annotations
 import hashlib
 import random
 
-from oncallenv.core.types import ScenarioSpec
+from models import ScenarioSpec
 
 
 TOPOLOGIES = ["simple_fanout", "deep_chain", "mesh", "star", "bipartite", "diamond"]

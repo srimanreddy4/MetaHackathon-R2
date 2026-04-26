@@ -8,7 +8,7 @@ from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 
 from oncallenv.core.env import OnCallRedShiftEnv
-from oncallenv.core.types import Action
+from models import Action
 
 
 class ResetRequest(BaseModel):

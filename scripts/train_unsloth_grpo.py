@@ -22,6 +22,7 @@ from oncallenv import OnCallRedShiftEnv
 from oncallenv.core.tools import MUTATING_TOOLS, READ_ONLY_TOOLS
 from oncallenv.core.types import Action
 from oncallenv.curriculum import RegretBuffer
+from oncallenv.rewards.easy_shaping import calculate_easy_shaping_reward
 
 
 SERVICES = [
@@ -51,26 +52,7 @@ COMMAND_RE = re.compile(
 )
 
 
-FAULT_RUNBOOK_HINTS = {
-    "oom_kill": "memory pressure or OOMKilled usually needs kubectl_rollout_restart on the faulty service",
-    "cpu_hog": "CPU saturation usually needs kubectl_scale on the faulty service",
-    "network_partition": "network partition symptoms usually need traffic_split_update on the faulty service",
-    "dns_misconfig": "DNS or no-route symptoms usually need kubectl_apply_config on the faulty service",
-    "replica_lag": "replica lag usually needs feature_flag_toggle on the faulty service",
-    "cache_stampede": "cache stampede usually needs feature_flag_toggle on the faulty service",
-    "http_503_loop": "HTTP 503 loops usually need kubectl_rollout_undo on the faulty service",
-    "deadlock": "deadlocks usually need kubectl_rollout_restart on the faulty service",
-    "disk_full": "disk-full configuration incidents usually need kubectl_apply_config on the faulty service",
-    "cert_expiry": "certificate expiry usually needs kubectl_apply_config on the faulty service",
-    "clock_skew": "clock skew usually needs kubectl_rollout_restart on the faulty service",
-    "gc_pause": "GC pause incidents usually need kubectl_rollout_restart on the faulty service",
-}
-
-PROMPT_TEMPLATES = [
-    "standard",
-    "runbook",
-    "triage",
-]
+from oncallenv.core.prompts import build_defender_prompt, FAULT_RUNBOOK_HINTS, PROMPT_TEMPLATES
 
 
 def build_rca(service: str, category: str) -> str:
@@ -106,65 +88,7 @@ def required_pairs(required: list[str]) -> list[tuple[str, str]]:
     return pairs
 
 
-def build_prompt(
-    *,
-    task_id: str,
-    alert_service: str,
-    alert_message: str,
-    services: list[str],
-    tools: list[str],
-    root_service: str,
-    root_category: str,
-    required: list[str],
-    prompt_mode: str,
-    template: str,
-) -> str:
-    base = f"""You are the on-call SRE for OnCallEnv Red Shift.
-
-Task id: {task_id}
-Critical alert: {alert_service} reports {alert_message}
-Available services: {", ".join(services)}
-Available tools: {", ".join(tools)}
-
-Return only the XML action block below. Put one simulator command per line inside:
-<actions>
-...
-</actions>
-Stop immediately after the closing </actions> tag.
-
-Use real commands such as kubectl_logs SERVICE, promql_query SERVICE,
-jaeger_search SERVICE, kubectl_rollout_restart SERVICE,
-kubectl_rollout_undo SERVICE, kubectl_scale SERVICE,
-feature_flag_toggle SERVICE, traffic_split_update SERVICE,
-kubectl_apply_config SERVICE, and declare_resolved.
-Do not include explanations, markdown, bullets, JSON, RCA text, or prose outside the tags.
-"""
-    if prompt_mode == "hard":
-        return base
-
-    accepted = ", ".join(f"{tool} {service}" for tool, service in required_pairs(required))
-    hint = FAULT_RUNBOOK_HINTS.get(root_category, f"{root_category} symptoms should be remediated on {root_service}")
-    if template == "runbook":
-        return (
-            base
-            + f"\nTraining runbook hint: suspected faulty service is {root_service}. "
-            + f"Fault family is {root_category}. {hint}. "
-            + f"Accepted remediation command for this easy curriculum item: {accepted}. "
-            + "A good answer is exactly 3-5 command lines and ends with </actions>.\n"
-        )
-    if template == "triage":
-        return (
-            base
-            + f"\nEasy triage hints: first inspect {root_service}; then apply the remediation matching {root_category}; "
-            + f"then declare_resolved. Gold remediation: {accepted}. "
-            + "A good answer is exactly 3-5 command lines and ends with </actions>.\n"
-        )
-    return (
-        base
-        + f"\nEasy-mode hints: root service = {root_service}; fault = {root_category}; "
-        + f"best remediation = {accepted}. Include declare_resolved after the fix. "
-        + "A good answer is exactly 3-5 command lines and ends with </actions>.\n"
-    )
+# build_prompt logic moved to oncallenv.core.prompts
 
 
 def inspect_task(task_id: str, *, prompt_mode: str = "hard", template: str = "standard") -> dict[str, Any]:
@@ -174,15 +98,10 @@ def inspect_task(task_id: str, *, prompt_mode: str = "hard", template: str = "st
     service = graph.root_cause_service
     category = graph.root_cause_category
     required = sorted(graph.required_remediations)
-    prompt = build_prompt(
-        task_id=task_id,
-        alert_service=obs.alerts[0].service,
+    prompt = build_defender_prompt(
+        spec=env._scenario,
+        graph=graph,
         alert_message=obs.alerts[0].message,
-        services=obs.services,
-        tools=obs.available_tools,
-        root_service=service,
-        root_category=category,
-        required=required,
         prompt_mode=prompt_mode,
         template=template,
     )
@@ -252,46 +171,7 @@ def parse_commands(text: str, max_commands: int = 10) -> list[str]:
     return commands
 
 
-def shaped_easy_reward(completion: Any, commands: list[str], env_reward: float, required: list[str], root_service: str) -> float:
-    text = extract_completion_text(completion)
-    lower = text.lower()
-    pairs = required_pairs(required)
-    required_tools = {tool for tool, _ in pairs}
-    required_services = {service for _, service in pairs}
-    command_set = set(commands)
-    tools_seen = {command.split()[0] for command in commands if command.split()}
-    services_seen = {service for command in commands for service in SERVICES if service in command}
-
-    score = 0.0
-    if "<actions>" in lower and "</actions>" in lower:
-        score += 0.10
-    if commands:
-        score += 0.08
-    if any(command.split()[0] in READ_ONLY_TOOLS for command in commands if command.split()):
-        score += 0.10
-    if root_service in services_seen:
-        score += 0.18
-    elif required_services & services_seen:
-        score += 0.12
-    if required_tools & tools_seen:
-        score += 0.18
-    exact_matches = 0
-    for tool, service in pairs:
-        if f"{tool} {service}" in command_set:
-            exact_matches += 1
-    if pairs:
-        score += 0.28 * (exact_matches / len(pairs))
-    if "declare_resolved" in command_set:
-        score += 0.06
-    if 2 <= len(commands) <= 8:
-        score += 0.04
-    if any(command.startswith("submit_rca") for command in commands):
-        score -= 0.05
-
-    # Keep a connection to the real environment reward, but make the gradient
-    # much denser for early LLM policy learning.
-    score = 0.75 * score + 0.25 * max(0.0, env_reward)
-    return max(-0.1, min(1.0, score))
+# shaped_easy_reward logic moved to oncallenv.rewards.easy_shaping
 
 
 def rollout_reward(task_id: str, completion: Any, root_service: str, root_category: str, required: list[str] | None = None, reward_mode: str = "hard") -> float:
@@ -313,7 +193,14 @@ def rollout_reward(task_id: str, completion: Any, root_service: str, root_catego
 
     reward = float(obs.reward or 0.0)
     if reward_mode == "easy":
-        return shaped_easy_reward(completion, commands, reward, required or [], root_service)
+        return calculate_easy_shaping_reward(
+            completion_text=text,
+            commands=commands,
+            env_reward=reward,
+            required_remediations=required_pairs(required or []),
+            root_service=root_service,
+            services_list=SERVICES,
+        )
     format_bonus = 0.05 if "<actions>" in text.lower() and "</actions>" in text.lower() else 0.0
     concise_bonus = 0.03 if 2 <= len(commands) <= 8 else 0.0
     return max(-0.25, min(1.1, reward + format_bonus + concise_bonus))

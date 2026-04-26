@@ -1,6 +1,6 @@
 import pytest
 
-from oncallenv.core.types import ScenarioSpec
+from models import ScenarioSpec
 from oncallenv.simulation.faults import FAULTS
 from oncallenv.simulation.scenario_compiler import compile_scenario
 from oncallenv.telemetry.otlp import json_logs, prometheus_metrics

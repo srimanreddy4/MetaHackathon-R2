@@ -7,7 +7,7 @@ from typing import Callable
 
 from pydantic import ValidationError
 
-from oncallenv.core.types import RCA
+from models import RCA
 from oncallenv.simulation.graph import MicroserviceGraph
 from oncallenv.telemetry.otlp import jaeger_traces, json_logs, prometheus_metrics
 

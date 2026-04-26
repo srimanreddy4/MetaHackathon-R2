@@ -8,7 +8,7 @@ from pathlib import Path
 import yaml
 
 from oncallenv.core.env import DEFAULT_SCENARIO
-from oncallenv.core.types import Action, ScenarioSpec
+from models import Action, ScenarioSpec
 from oncallenv.curriculum.buffer import BufferedScenario, RegretBuffer
 from oncallenv.curriculum.mutator import ScenarioMutator
 from oncallenv.simulation.scenario_compiler import compile_scenario

@@ -1,2 +1,0 @@
-"""HTTP client package."""
-

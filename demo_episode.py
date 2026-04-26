@@ -2,7 +2,7 @@
 
 import json
 from oncallenv import OnCallRedShiftEnv
-from oncallenv.core.types import Action
+from models import Action
 from oncallenv.simulation.scenario_compiler import compile_scenario
 from oncallenv.simulation.faults import FAULTS
 

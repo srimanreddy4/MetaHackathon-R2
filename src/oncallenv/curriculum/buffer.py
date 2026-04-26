@@ -7,7 +7,7 @@ import random
 from dataclasses import dataclass
 from pathlib import Path
 
-from oncallenv.core.types import ScenarioSpec
+from models import ScenarioSpec
 
 
 @dataclass

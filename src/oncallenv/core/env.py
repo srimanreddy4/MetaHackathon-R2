@@ -10,7 +10,7 @@ import yaml
 from openenv.core import Environment
 
 from oncallenv.core.tools import AVAILABLE_TOOLS, ToolRuntime
-from oncallenv.core.types import Action, Alert, Observation, ScenarioSpec, State
+from models import Action, Alert, Observation, ScenarioSpec, State
 from oncallenv.rewards import build_default_rubric
 from oncallenv.simulation.scenario_compiler import compile_scenario
 
@@ -173,7 +173,8 @@ class OnCallRedShiftEnv(Environment[Action, Observation, State]):
             return []
 
     def _seed_specs(self) -> list[ScenarioSpec]:
-        seed_dir = os.path.join(os.getcwd(), "scenarios_seed")
+        # Resolve scenarios_seed relative to this package directory (oncallenv)
+        seed_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "scenarios_seed")
         specs = [DEFAULT_SCENARIO]
         if os.path.isdir(seed_dir):
             for name in sorted(os.listdir(seed_dir)):

@@ -2,18 +2,25 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+COPY requirements-docker.txt .
+
+# 👇 Fix: explicit index + retries + timeout
+RUN pip install --upgrade pip && \
+    pip install --no-cache-dir -r requirements-docker.txt \
+    -i https://pypi.org/simple \
+    --trusted-host pypi.org \
+    --trusted-host files.pythonhosted.org \
+    --retries 10 \
+    --timeout 1000
 
 COPY app.py .
 COPY src/ src/
-COPY scenarios_seed/ scenarios_seed/
 COPY openenv.yaml .
 COPY README.md .
 COPY pyproject.toml .
 COPY .env.example .
 
-ENV PYTHONPATH=/app/src
+ENV PYTHONPATH=/app:/app/src
 
 EXPOSE 7860
 
