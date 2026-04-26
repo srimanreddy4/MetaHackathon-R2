@@ -664,10 +664,14 @@ def main() -> None:
         d_advantages = [r - d_mean for r in d_rewards]
 
         valid_count = sum(1 for r in a_rows if r["valid"])
+        threshold = 0.45
+        pass_rate = sum(1 for r in d_rewards if r >= threshold) / len(d_rewards) if d_rewards else 0.0
+        
         iter_summary = {
             "iteration": iteration,
             "attacker_mean_reward": a_mean,
             "defender_mean_reward": d_mean,
+            "defender_pass_rate": pass_rate,
             "attacker_valid_count": valid_count,
             "attacker_total": len(a_rows),
             "num_new_specs": len(result["valid_specs"]),
@@ -677,7 +681,7 @@ def main() -> None:
         print(
             f"[Iter {iteration:>4d}] "
             f"Attacker r={a_mean:.3f} ({valid_count}/{len(a_rows)} valid) | "
-            f"Defender r={d_mean:.3f}"
+            f"Defender r={d_mean:.3f} (Pass Rate: {pass_rate:.1%})"
         )
 
     # Save self-play generation data
@@ -728,8 +732,10 @@ def main() -> None:
             "root_category": graph.root_cause_category,
         })
 
-    rng.shuffle(train_rows)
-    print(f"Combined training dataset: {len(train_rows)} rows")
+    attacker_rows = [r for r in train_rows if r['role'] == 'attacker']
+    defender_rows = [r for r in train_rows if r['role'] == 'defender']
+    train_rows = attacker_rows + defender_rows
+    print(f"Combined training dataset: {len(train_rows)} rows (Attacker first, Defender second)")
 
     # SAVING SELF PLAY GENERATIONS
     dataset_path = args.out_dir / "selfplay_dataset.jsonl"
@@ -836,6 +842,7 @@ def main() -> None:
 
     train_dataset = Dataset.from_list(train_rows)
     training_args = make_grpo_config(args)
+    training_args.dataloader_drop_last = False
     trainer_kwargs: dict[str, Any] = {
         "model": model,
         "reward_funcs": [attacker_reward, defender_reward],

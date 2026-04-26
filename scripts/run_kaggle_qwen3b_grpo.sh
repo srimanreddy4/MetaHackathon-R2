@@ -41,7 +41,9 @@ run_train() {
     --eval-tasks "${eval_tasks}" \
     --lr "${LR:-5e-6}" \
     --save-steps "${save_steps}" \
-    --logging-steps "${LOGGING_STEPS:-5}"
+    --logging-steps "${LOGGING_STEPS:-5}" \
+    --push-to-hub \
+    --hub-model-id "NeerjaKasture/spice-qwen-1.5b-grpo"
 }
 
 case "${MODE}" in
@@ -56,7 +58,7 @@ case "${MODE}" in
     run_train training_results/unsloth_grpo_qwen3b_smoke 40 50 4 768 512 128 8 50
     ;;
   main)
-    run_train training_results/unsloth_grpo_qwen3b_kaggle 160 600 8 1024 768 192 32 100
+    run_train training_results/unsloth_grpo_qwen3b_kaggle 160 300 8 1024 768 192 32 50
     ;;
   long)
     run_train training_results/unsloth_grpo_qwen3b_kaggle_long 206 1000 8 1024 768 192 48 100
