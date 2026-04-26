@@ -264,7 +264,7 @@ case "${MODE}" in
   rcaeval-qwen-test)
     python scripts/evaluate_rcaeval_qwen_adapter.py \
       --run-dir training_results/unsloth_grpo_qwen3b_easy \
-      --artifact-archive "${RCA_ARTIFACT_ARCHIVE:-artifacts/easy_grpo_qwen3b_artifacts.tar.gz}" \
+      --artifact-archive "${RCA_ARTIFACT_ARCHIVE:-/kaggle/input/datasets/srimanreddy/artifacts/easy_grpo_qwen3b_artifacts.tar.gz}" \
       --model-name "${MODEL_NAME}" \
       --out-dir eval_results/rcaeval_qwen_easy \
       --max-seq-length 1536 \

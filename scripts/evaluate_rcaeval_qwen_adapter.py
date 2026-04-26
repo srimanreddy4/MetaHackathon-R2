@@ -60,6 +60,8 @@ def resolve_run_dir(run_dir: Path, artifact_archive: Path | None, extract_dir: P
             Path("artifacts/models/easy_grpo_qwen3b_artifacts.tar.gz"),
             Path("/kaggle/working/easy_grpo_qwen3b_artifacts.tar.gz"),
             Path("/kaggle/working/MetaHackathon-R2/artifacts/models/easy_grpo_qwen3b_artifacts.tar.gz"),
+            Path("/kaggle/input/datasets/srimanreddy/artifacts/easy_grpo_qwen3b_artifacts.tar.gz"),
+            Path("/kaggle/input/datasets/srimanreddy/artifacts/models/easy_grpo_qwen3b_artifacts.tar.gz"),
         ]
     )
 
