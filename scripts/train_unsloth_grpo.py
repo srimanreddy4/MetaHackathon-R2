@@ -396,24 +396,14 @@ def evolve_curriculum(
 ) -> dict[str, Any]:
     if args.curriculum_evolve_iterations <= 0:
         return {"evolved_count": 0}
-    # Use LLM-based evaluator only when explicitly requested; otherwise default to
-    # RandomPolicyEvaluator which estimates solve rate via env rollouts with random
-    # actions — no API key needed.
-    if args.difficulty_source == "llm_inference":
-        from oncallenv.curriculum.autocurriculum import LLMDefenderEvaluator
-        evaluator = LLMDefenderEvaluator(
-            model_name=args.curriculum_defender_model or args.model_name,
-            rollout_count=args.rollouts_per_candidate,
-            max_steps=args.curriculum_defender_max_steps,
-            temperature=args.curriculum_defender_temperature,
-        )
-    else:
-        from oncallenv.curriculum.autocurriculum import RandomPolicyEvaluator
-        evaluator = RandomPolicyEvaluator(
-            rollout_count=args.rollouts_per_candidate,
-            max_steps=args.curriculum_defender_max_steps,
-            seed=args.seed,
-        )
+    # Always use RandomPolicyEvaluator for evolution. Estimates solve rate
+    # via env rollouts with random actions — no API key needed.
+    from oncallenv.curriculum.autocurriculum import RandomPolicyEvaluator
+    evaluator = RandomPolicyEvaluator(
+        rollout_count=args.rollouts_per_candidate,
+        max_steps=args.curriculum_defender_max_steps,
+        seed=args.seed,
+    )
     runner = AutocurriculumRunner.from_seed_dir(
         seed_dir=Path("scenarios_seed"),
         seed=args.seed,
@@ -543,6 +533,50 @@ def ensure_lora_is_trainable(model) -> dict[str, int]:
     return report
 
 
+def get_default_args(**kwargs) -> SimpleNamespace:
+    from types import SimpleNamespace
+    defaults = {
+        "model_name": "unsloth/Qwen2.5-1.5B-Instruct-bnb-4bit",
+        "out_dir": Path("training_results/unsloth_grpo"),
+        "curriculum_buffer": Path("curriculum_results/buffer.json"),
+        "max_tasks": 120,
+        "max_buffer_size": 0,
+        "max_steps": 600,
+        "per_device_train_batch_size": 4,
+        "gradient_accumulation_steps": 2,
+        "num_generations": 4,
+        "max_seq_length": 1536,
+        "max_prompt_length": 1024,
+        "max_completion_length": 256,
+        "lr": 5e-6,
+        "temperature": 0.8,
+        "beta": 0.02,
+        "scale_rewards": "batch",
+        "loss_type": "dr_grpo",
+        "reward_mode": "hard",
+        "prompt_mode": "hard",
+        "prompt_variants": 1,
+        "logging_steps": 5,
+        "save_steps": 100,
+        "eval_tasks": 24,
+        "lora_rank": 16,
+        "lora_alpha": 32,
+        "resume_from_checkpoint": None,
+        "seed": 20260424,
+        "print_completions": False,
+        "verbose": False,
+        "dynamic_curriculum": False,
+        "curriculum_update_every": 100,
+        "curriculum_evolve_iterations": 0,
+        "curriculum_evolve_warmup_steps": 75,
+        "curriculum_evolve_frequency": 2,
+        "rollouts_per_candidate": 3,
+        "curriculum_defender_max_steps": 18,
+    }
+    defaults.update(kwargs)
+    return SimpleNamespace(**defaults)
+
+
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--model-name", default="unsloth/Qwen2.5-1.5B-Instruct-bnb-4bit")
@@ -564,7 +598,7 @@ def main() -> None:
     parser.add_argument("--loss-type", default="dr_grpo")
     parser.add_argument("--reward-mode", choices=["hard", "easy"], default="hard")
     parser.add_argument("--prompt-mode", choices=["hard", "easy"], default="hard")
-    parser.add_argument("--prompt-variants", type=int, default=1)
+    parser.add_argument("--prompt_variants", type=int, default=1)
     parser.add_argument("--logging-steps", type=int, default=5)
     parser.add_argument("--save-steps", type=int, default=100)
     parser.add_argument("--eval-tasks", type=int, default=24)
@@ -579,12 +613,10 @@ def main() -> None:
     parser.add_argument("--curriculum-evolve-iterations", type=int, default=0)
     parser.add_argument("--curriculum-evolve-warmup-steps", type=int, default=75)
     parser.add_argument("--curriculum-evolve-frequency", type=int, default=2)
-    parser.add_argument("--difficulty-source", choices=["feedback", "llm_inference"], default="feedback")
     parser.add_argument("--rollouts-per-candidate", type=int, default=3)
-    parser.add_argument("--curriculum-defender-model", default=None)
     parser.add_argument("--curriculum-defender-max-steps", type=int, default=18)
-    parser.add_argument("--curriculum-defender-temperature", type=float, default=0.2)
-    args = parser.parse_args()
+    args_ns = parser.parse_args()
+    args = get_default_args(**vars(args_ns))
 
     os.environ.setdefault("WANDB_DISABLED", "true")
     os.environ.setdefault("TOKENIZERS_PARALLELISM", "false")
@@ -734,7 +766,6 @@ def main() -> None:
         "trainable_parameter_report": trainable_report,
         "dynamic_curriculum": args.dynamic_curriculum,
         "curriculum_update_every": args.curriculum_update_every,
-        "difficulty_source": args.difficulty_source,
         "rollouts_per_candidate": args.rollouts_per_candidate,
         "curriculum_updates": curriculum_updates,
         "resumed_from_checkpoint": str(args.resume_from_checkpoint) if args.resume_from_checkpoint else None,
