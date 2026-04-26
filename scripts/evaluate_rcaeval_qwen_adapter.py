@@ -51,6 +51,19 @@ def resolve_run_dir(run_dir: Path, artifact_archive: Path | None, extract_dir: P
     if (run_dir / "checkpoint-200" / "adapter_model.safetensors").exists() or any(run_dir.glob("checkpoint-*")):
         return run_dir
 
+    extracted_run_dirs = [
+        Path("artifacts/models/easy_grpo_qwen3b_extracted/training_results/unsloth_grpo_qwen3b_easy"),
+        Path("/kaggle/input/datasets/srimanreddy/artifacts/training_results/unsloth_grpo_qwen3b_easy"),
+        Path("/kaggle/input/datasets/srimanreddy/artifacts/models/easy_grpo_qwen3b/training_results/unsloth_grpo_qwen3b_easy"),
+    ]
+    kaggle_input = Path("/kaggle/input")
+    if kaggle_input.exists():
+        extracted_run_dirs.extend(kaggle_input.glob("**/training_results/unsloth_grpo_qwen3b_easy"))
+
+    for candidate_run_dir in extracted_run_dirs:
+        if (candidate_run_dir / "checkpoint-200" / "adapter_model.safetensors").exists() or any(candidate_run_dir.glob("checkpoint-*")):
+            return candidate_run_dir
+
     candidate_archives: list[Path] = []
     if artifact_archive:
         candidate_archives.append(artifact_archive)
@@ -64,7 +77,6 @@ def resolve_run_dir(run_dir: Path, artifact_archive: Path | None, extract_dir: P
             Path("/kaggle/input/datasets/srimanreddy/artifacts/models/easy_grpo_qwen3b_artifacts.tar.gz"),
         ]
     )
-    kaggle_input = Path("/kaggle/input")
     if kaggle_input.exists():
         candidate_archives.extend(kaggle_input.glob("**/easy_grpo_qwen3b_artifacts.tar.gz"))
 
@@ -81,7 +93,7 @@ def resolve_run_dir(run_dir: Path, artifact_archive: Path | None, extract_dir: P
         if extracted and any(extracted.glob("checkpoint-*")):
             return extracted
 
-    searched = ", ".join(str(path) for path in deduped_archives)
+    searched = ", ".join([*(str(path) for path in extracted_run_dirs), *(str(path) for path in deduped_archives)])
     raise FileNotFoundError(
         f"Could not find checkpoints under {run_dir} and could not extract an artifact archive. "
         f"Searched archives: {searched}"
