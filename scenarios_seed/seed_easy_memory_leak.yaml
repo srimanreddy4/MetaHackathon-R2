@@ -1,0 +1,14 @@
+task_id: seed_easy_memory_leak
+topology: simple_fanout
+fault_primary: oom_kill
+fault_secondary:
+inject_service: payment-service
+latency_ms: 4200
+blast_radius: 0.35
+metric_noise: 0.1
+red_herring: stale_deploy_notice
+deploy_window: recent_deploy
+schema_drift: none
+seed: 7
+max_steps: 25
+

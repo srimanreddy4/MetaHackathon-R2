@@ -1,105 +1,75 @@
-name: oncall-env
+name: oncallenv-redshift
 version: "1.0.0"
 description: >
-  Production Incident Response environment for AI agent evaluation.
-  Agents diagnose and remediate simulated infrastructure incidents
-  across microservice architectures — from simple OOM kills to
-  subtle cross-service cache degradation.
+  OnCallEnv Red Shift is an OpenEnv-compatible SRE incident-response
+  environment with a pure-Python microservice simulator, OpenTelemetry-shaped
+  telemetry, a defender tool surface, composable OpenEnv Rubric rewards, and
+  seed scenarios for attacker/autocurriculum self-play.
 
 author: oncall-env-team
 tags:
   - openenv
   - sre
   - incident-response
-  - devops
-  - real-world
+  - self-play
+  - multi-agent
 
 observation_space:
   type: object
   description: >
-    Contains active alerts, available services, last action results,
-    and goal description. Agent uses investigation commands to gather
-    additional context (metrics, logs, configs, dependencies, deploy history).
+    Observation includes active alerts, last action result, available SRE tools,
+    service names, elapsed incident time, task goal, RCA requirement, reward, and
+    reward breakdown.
 
 action_space:
-  type: string
+  type: object
   description: >
-    Free-form command string. Available commands: check_metrics, check_logs,
-    check_config, check_dependencies, check_deploy_history, restart_service,
-    rollback_deploy, scale_service, update_config, mark_resolved.
+    Action has a command string parsed as an SRE tool call. Tools include
+    kubectl_get_pods, kubectl_logs, kubectl_top, promql_query, logql_query,
+    jaeger_search, istioctl_proxy_status, istioctl_routes, curl_service,
+    dns_lookup, check_deploy_history, kubectl_rollout_undo,
+    kubectl_rollout_restart, kubectl_scale, feature_flag_toggle,
+    traffic_split_update, kubectl_apply_config, post_status_update,
+    declare_resolved, and submit_rca.
 
 reward:
   type: float
   range: [0.0, 1.0]
   description: >
-    Composite reward with partial progress signals:
-    investigation quality (0.30), root cause identification (0.25),
-    correct remediation (0.30), efficiency bonus (0.15),
-    minus penalties for wrong destructive actions.
+    Weighted OpenEnv Rubric composition: RecoveryRubric 0.35, RCAQualityRubric
+    0.30, BlastRadiusRubric 0.25, SafetyRubric 0.10. REWARD_CAP may optionally
+    clamp total reward for capped-vs-uncapped ablations.
 
 tasks:
-  - id: easy_memory_leak
-    name: "Memory Leak in Payment Service"
+  - id: seed_easy_memory_leak
+    name: "Seed: Payment Service OOM Kill"
     difficulty: easy
-    description: >
-      Payment service experiencing OOM kills. Agent must check logs,
-      identify the memory leak, and restart the service.
-    max_steps: 10
-
-  - id: medium_cascading_failure
-    name: "Cascading Connection Pool Exhaustion"
+    max_steps: 25
+  - id: seed_dns_misconfiguration
+    name: "Seed: DNS Misconfiguration"
     difficulty: medium
-    description: >
-      API gateway timeouts caused by database connection pool exhaustion
-      in order-service due to a config change. Agent must trace the
-      dependency chain and fix the configuration.
-    max_steps: 15
-
-  - id: hard_cache_degradation
-    name: "Subtle Cache Bug Causing Cross-Service Degradation"
-    difficulty: hard
-    description: >
-      System-wide latency increase with no single service failing.
-      Root cause is a cache-service deployment that changed the key
-      hashing algorithm, invalidating all cached entries. Agent must
-      correlate signals across multiple services to find and fix it.
-    max_steps: 20
-
-  - id: medium_dns_misconfiguration
-    name: "DNS Misconfiguration Causing Intermittent Failures"
+    max_steps: 25
+  - id: seed_cert_expiry
+    name: "Seed: Certificate Expiry"
     difficulty: medium
-    description: >
-      Order service intermittently failing to reach inventory service.
-      A config change pointed it at a decommissioned DNS name. DNS
-      caching causes some requests to succeed while others fail.
-      Agent must trace the intermittent pattern to the wrong hostname.
-    max_steps: 15
-
-  - id: hard_replication_lag
-    name: "Database Replication Lag from Runaway Batch Job"
+    max_steps: 25
+  - id: seed_cache_stampede
+    name: "Seed: Cache Stampede"
     difficulty: hard
-    description: >
-      Multiple services returning stale data with no errors or downtime.
-      A batch analytics job running during peak hours causes massive
-      write amplification on the primary DB, pushing replication lag
-      to 45+ seconds. Agent must correlate stale-read patterns across
-      services to find the DB-level root cause.
-    max_steps: 20
-
-  - id: expert_multi_root_cause
-    name: "Simultaneous Bad Deployment and Config Drift"
+    max_steps: 25
+  - id: seed_replica_lag
+    name: "Seed: Replica Lag"
+    difficulty: hard
+    max_steps: 25
+  - id: seed_http_503_loop
+    name: "Seed: HTTP 503 Loop with Secondary Partition"
     difficulty: expert
-    description: >
-      Two independent failures happening at the same time: search-service
-      deployed v3.1.0 with a broken Elasticsearch query builder causing 95%
-      error rate, AND a capacity-planner bot reduced order-service DB pool
-      from 50 to 3, causing connection timeouts. Agent must identify and
-      fix BOTH root causes independently.
     max_steps: 25
 
 endpoints:
   reset: POST /reset
   step: POST /step
   state: GET /state
+  close: POST /close
   tasks: GET /tasks
-  health: GET /
+  health: GET /health

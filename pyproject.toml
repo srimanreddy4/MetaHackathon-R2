@@ -1,11 +1,11 @@
 [build-system]
 requires = ["setuptools>=68.0", "wheel"]
-build-backend = "setuptools.backends._legacy:_Backend"
+build-backend = "setuptools.build_meta"
 
 [project]
 name = "oncall-env"
 version = "1.0.0"
-description = "Production Incident Response environment for AI agent evaluation"
+description = "OnCallEnv Red Shift: self-play SRE incident response environment"
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
@@ -13,9 +13,13 @@ dependencies = [
     "uvicorn>=0.24.0",
     "pydantic>=2.5.0",
     "requests>=2.31.0",
+    "pyyaml>=6.0.0",
     "openai>=1.6.0",
     "openenv-core>=0.2.0",
 ]
 
 [project.scripts]
-server = "server.app:main"
+server = "oncallenv.server.app:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]

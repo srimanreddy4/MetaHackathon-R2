@@ -1,0 +1,14 @@
+task_id: seed_http_503_loop
+topology: diamond
+fault_primary: http_503_loop
+fault_secondary: network_partition
+inject_service: checkout-service
+latency_ms: 3900
+blast_radius: 0.8
+metric_noise: 0.35
+red_herring: flapping_canary
+deploy_window: recent_deploy
+schema_drift: endpoint_version_bump
+seed: 29
+max_steps: 25
+

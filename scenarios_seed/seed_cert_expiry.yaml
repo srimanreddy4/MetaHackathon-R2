@@ -1,0 +1,14 @@
+task_id: seed_cert_expiry
+topology: deep_chain
+fault_primary: cert_expiry
+fault_secondary:
+inject_service: checkout-service
+latency_ms: 5000
+blast_radius: 0.7
+metric_noise: 0.1
+red_herring: unrelated_alert
+deploy_window: none
+schema_drift: none
+seed: 17
+max_steps: 25
+

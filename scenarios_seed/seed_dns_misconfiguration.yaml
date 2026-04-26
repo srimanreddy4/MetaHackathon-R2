@@ -1,0 +1,14 @@
+task_id: seed_dns_misconfiguration
+topology: mesh
+fault_primary: dns_misconfig
+fault_secondary:
+inject_service: inventory-service
+latency_ms: 3600
+blast_radius: 0.45
+metric_noise: 0.2
+red_herring: false_correlation
+deploy_window: config_change
+schema_drift: rename_metric
+seed: 11
+max_steps: 25
+

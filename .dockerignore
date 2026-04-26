@@ -1,9 +1,59 @@
-__pycache__/
+# Version control
+.git
+.gitignore
+.gitattributes
+
+# Python caches
+__pycache__
 *.pyc
 *.pyo
-.git/
-.gitignore
-.env
+.pytest_cache
+
+# Notebooks (not needed at runtime)
+notebooks/
+
+# Docs / images (served by HF file viewer, not the app)
+docs/
+blog.md
+
+# Tests
+tests/
+
+# Scripts (training only)
+scripts/
+
+# Old server (replaced by Gradio app)
+server/
+
+# No-feedback model checkpoint (not used in inference)
+models/no-feedback-model-cp200/
+
+# Training-state files inside the feedback model dir
+models/feedback-model-cp300/optimizer.pt
+models/feedback-model-cp300/rng_state.pth
+models/feedback-model-cp300/scaler.pt
+models/feedback-model-cp300/scheduler.pt
+models/feedback-model-cp300/trainer_state.json
+models/feedback-model-cp300/training_args.bin
+
+# Build / lock artifacts
+*.zip
+*.lock
+*.egg-info
+dist/
+build/
+
+# Misc root files not needed inside the container
+client.py
+inference.py
+models.py
+__init__.py
+openenv.yaml
 problem_statement.md
-test_env.py
-run_simulation.py
+submission.txt
+requirements-llm.txt
+requirements.txt
+requirements-docker.txt
+uv.lock
+pyproject.toml
+LICENSE

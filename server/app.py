@@ -1,23 +1,38 @@
+"""FastAPI application for the OnCallEnv Red Shift environment.
+
+Exposes the environment over HTTP and WebSocket endpoints compatible with
+the standard OpenEnv EnvClient protocol.
+
+Usage:
+    uvicorn server.app:app --host 0.0.0.0 --port 8000
 """
-Server entry point for OpenEnv deployment.
 
-Imports the FastAPI app from the root app module and exposes a main()
-function that runs uvicorn on port 7860.
-"""
+try:
+    from openenv.core.env_server.http_server import create_app
+except Exception as e:
+    raise ImportError(
+        "openenv-core is required. Install with: pip install openenv-core>=0.2.0"
+    ) from e
 
-import sys
-import os
+try:
+    from ..models import OnCallRedShiftAction, OnCallRedShiftObservation
+    from .oncallenv_redshift_environment import OnCallRedShiftEnvironment
+except ImportError:
+    from models import OnCallRedShiftAction, OnCallRedShiftObservation
+    from server.oncallenv_redshift_environment import OnCallRedShiftEnvironment
 
-# Add the project root to the path so we can import app
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+app = create_app(
+    OnCallRedShiftEnvironment,
+    OnCallRedShiftAction,
+    OnCallRedShiftObservation,
+    env_name="oncallenv_redshift",
+    max_concurrent_envs=1,
+)
 
-from app import app  # noqa: E402
 
-
-def main():
-    """Run the OnCallEnv server."""
+def main(host: str = "0.0.0.0", port: int = 8000):
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=7860)
+    uvicorn.run(app, host=host, port=port)
 
 
 if __name__ == "__main__":

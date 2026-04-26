@@ -1,0 +1,4122 @@
+[
+  {
+    "spec": {
+      "task_id": "seed_easy_memory_leak",
+      "topology": "simple_fanout",
+      "fault_primary": "oom_kill",
+      "fault_secondary": null,
+      "inject_service": "payment-service",
+      "latency_ms": 4200,
+      "blast_radius": 0.35,
+      "metric_noise": 0.1,
+      "red_herring": "stale_deploy_notice",
+      "deploy_window": "recent_deploy",
+      "schema_drift": "none",
+      "seed": 7,
+      "max_steps": 25
+    },
+    "regret": 0.5,
+    "solve_rate": 0.5,
+    "seen_count": 5
+  },
+  {
+    "spec": {
+      "task_id": "seed_cache_stampede",
+      "topology": "bipartite",
+      "fault_primary": "cache_stampede",
+      "fault_secondary": null,
+      "inject_service": "redis-cache",
+      "latency_ms": 3100,
+      "blast_radius": 0.55,
+      "metric_noise": 0.3,
+      "red_herring": "old_anomaly",
+      "deploy_window": "flag_flip",
+      "schema_drift": "swap_units",
+      "seed": 19,
+      "max_steps": 25
+    },
+    "regret": 0.5,
+    "solve_rate": 0.5,
+    "seen_count": 8
+  },
+  {
+    "spec": {
+      "task_id": "seed_cert_expiry",
+      "topology": "deep_chain",
+      "fault_primary": "cert_expiry",
+      "fault_secondary": null,
+      "inject_service": "checkout-service",
+      "latency_ms": 5000,
+      "blast_radius": 0.7,
+      "metric_noise": 0.1,
+      "red_herring": "unrelated_alert",
+      "deploy_window": "none",
+      "schema_drift": "none",
+      "seed": 17,
+      "max_steps": 25
+    },
+    "regret": 0.5,
+    "solve_rate": 0.5,
+    "seen_count": 16
+  },
+  {
+    "spec": {
+      "task_id": "seed_dns_misconfiguration",
+      "topology": "mesh",
+      "fault_primary": "dns_misconfig",
+      "fault_secondary": null,
+      "inject_service": "inventory-service",
+      "latency_ms": 3600,
+      "blast_radius": 0.45,
+      "metric_noise": 0.2,
+      "red_herring": "false_correlation",
+      "deploy_window": "config_change",
+      "schema_drift": "rename_metric",
+      "seed": 11,
+      "max_steps": 25
+    },
+    "regret": 0.5,
+    "solve_rate": 0.5,
+    "seen_count": 6
+  },
+  {
+    "spec": {
+      "task_id": "seed_http_503_loop",
+      "topology": "diamond",
+      "fault_primary": "http_503_loop",
+      "fault_secondary": "network_partition",
+      "inject_service": "checkout-service",
+      "latency_ms": 3900,
+      "blast_radius": 0.8,
+      "metric_noise": 0.35,
+      "red_herring": "flapping_canary",
+      "deploy_window": "recent_deploy",
+      "schema_drift": "endpoint_version_bump",
+      "seed": 29,
+      "max_steps": 25
+    },
+    "regret": 0.5,
+    "solve_rate": 0.5,
+    "seen_count": 12
+  },
+  {
+    "spec": {
+      "task_id": "seed_replica_lag",
+      "topology": "star",
+      "fault_primary": "replica_lag",
+      "fault_secondary": null,
+      "inject_service": "postgres-primary",
+      "latency_ms": 2100,
+      "blast_radius": 0.4,
+      "metric_noise": 0.25,
+      "red_herring": "stale_deploy_notice",
+      "deploy_window": "none",
+      "schema_drift": "field_type_change",
+      "seed": 23,
+      "max_steps": 25
+    },
+    "regret": 0.5,
+    "solve_rate": 0.5,
+    "seen_count": 10
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0000_048610d10c",
+      "topology": "deep_chain",
+      "fault_primary": "cert_expiry",
+      "fault_secondary": "cert_expiry",
+      "inject_service": "checkout-service",
+      "latency_ms": 5000,
+      "blast_radius": 0.7,
+      "metric_noise": 0.1,
+      "red_herring": "unrelated_alert",
+      "deploy_window": "none",
+      "schema_drift": "none",
+      "seed": 177737823,
+      "max_steps": 25
+    },
+    "regret": 0.7869113516870825,
+    "solve_rate": 0.39345567584354124,
+    "seen_count": 17
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0001_823796c06b",
+      "topology": "diamond",
+      "fault_primary": "cpu_hog",
+      "fault_secondary": "network_partition",
+      "inject_service": "checkout-service",
+      "latency_ms": 3900,
+      "blast_radius": 0.8,
+      "metric_noise": 0.35,
+      "red_herring": "flapping_canary",
+      "deploy_window": "recent_deploy",
+      "schema_drift": "endpoint_version_bump",
+      "seed": 645382622,
+      "max_steps": 25
+    },
+    "regret": 0.20190972029088516,
+    "solve_rate": 0.1009548601454426,
+    "seen_count": 1
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0002_516316e0e5",
+      "topology": "deep_chain",
+      "fault_primary": "cert_expiry",
+      "fault_secondary": "cert_expiry",
+      "inject_service": "user-service",
+      "latency_ms": 5000,
+      "blast_radius": 0.7,
+      "metric_noise": 0.1,
+      "red_herring": "unrelated_alert",
+      "deploy_window": "none",
+      "schema_drift": "none",
+      "seed": 1290891373,
+      "max_steps": 25
+    },
+    "regret": 0.6965440790393388,
+    "solve_rate": 0.3482720395196694,
+    "seen_count": 10
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0003_ce9349227d",
+      "topology": "diamond",
+      "fault_primary": "http_503_loop",
+      "fault_secondary": "network_partition",
+      "inject_service": "redis-cache",
+      "latency_ms": 3900,
+      "blast_radius": 0.8,
+      "metric_noise": 0.35,
+      "red_herring": "flapping_canary",
+      "deploy_window": "recent_deploy",
+      "schema_drift": "endpoint_version_bump",
+      "seed": 78045274,
+      "max_steps": 25
+    },
+    "regret": 0.3429470675987196,
+    "solve_rate": 0.1714735337993598,
+    "seen_count": 6
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0004_63fa0016a2",
+      "topology": "deep_chain",
+      "fault_primary": "cert_expiry",
+      "fault_secondary": null,
+      "inject_service": "api-gateway",
+      "latency_ms": 5000,
+      "blast_radius": 0.7,
+      "metric_noise": 0.1,
+      "red_herring": "unrelated_alert",
+      "deploy_window": "none",
+      "schema_drift": "none",
+      "seed": 1206599075,
+      "max_steps": 25
+    },
+    "regret": 0.8565780420364977,
+    "solve_rate": 0.5717109789817512,
+    "seen_count": 11
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0005_c1de71f632",
+      "topology": "deep_chain",
+      "fault_primary": "cert_expiry",
+      "fault_secondary": "cert_expiry",
+      "inject_service": "checkout-service",
+      "latency_ms": 5000,
+      "blast_radius": 0.7,
+      "metric_noise": 0.1,
+      "red_herring": "unrelated_alert",
+      "deploy_window": "none",
+      "schema_drift": "endpoint_version_bump",
+      "seed": 1916959776,
+      "max_steps": 25
+    },
+    "regret": 0.35299704814947286,
+    "solve_rate": 0.17649852407473646,
+    "seen_count": 7
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0006_a0a5de69dd",
+      "topology": "mesh",
+      "fault_primary": "dns_misconfig",
+      "fault_secondary": "deadlock",
+      "inject_service": "inventory-service",
+      "latency_ms": 3600,
+      "blast_radius": 0.45,
+      "metric_noise": 0.2,
+      "red_herring": "false_correlation",
+      "deploy_window": "config_change",
+      "schema_drift": "rename_metric",
+      "seed": 861397283,
+      "max_steps": 25
+    },
+    "regret": 0.6090362931845191,
+    "solve_rate": 0.30451814659225956,
+    "seen_count": 11
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0007_9b2e7570b5",
+      "topology": "deep_chain",
+      "fault_primary": "cert_expiry",
+      "fault_secondary": "cert_expiry",
+      "inject_service": "postgres-primary",
+      "latency_ms": 5000,
+      "blast_radius": 0.7,
+      "metric_noise": 0.1,
+      "red_herring": "unrelated_alert",
+      "deploy_window": "none",
+      "schema_drift": "none",
+      "seed": 437860194,
+      "max_steps": 25
+    },
+    "regret": 0.7201310789859015,
+    "solve_rate": 0.3600655394929507,
+    "seen_count": 9
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0008_07d2bb9ea1",
+      "topology": "diamond",
+      "fault_primary": "http_503_loop",
+      "fault_secondary": "network_partition",
+      "inject_service": "checkout-service",
+      "latency_ms": 3900,
+      "blast_radius": 0.8,
+      "metric_noise": 0.35,
+      "red_herring": "flapping_canary",
+      "deploy_window": "recent_deploy",
+      "schema_drift": "field_type_change",
+      "seed": 1419362787,
+      "max_steps": 25
+    },
+    "regret": 0.38129419427988,
+    "solve_rate": 0.19064709713994,
+    "seen_count": 7
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0009_95017f5a0a",
+      "topology": "deep_chain",
+      "fault_primary": "deadlock",
+      "fault_secondary": null,
+      "inject_service": "api-gateway",
+      "latency_ms": 5000,
+      "blast_radius": 0.7,
+      "metric_noise": 0.1,
+      "red_herring": "unrelated_alert",
+      "deploy_window": "none",
+      "schema_drift": "none",
+      "seed": 1960231486,
+      "max_steps": 25
+    },
+    "regret": 0.6589350169593506,
+    "solve_rate": 0.6705324915203247,
+    "seen_count": 6
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0010_8aa9da8e06",
+      "topology": "deep_chain",
+      "fault_primary": "cert_expiry",
+      "fault_secondary": "cert_expiry",
+      "inject_service": "inventory-service",
+      "latency_ms": 5000,
+      "blast_radius": 0.7,
+      "metric_noise": 0.1,
+      "red_herring": "unrelated_alert",
+      "deploy_window": "none",
+      "schema_drift": "endpoint_version_bump",
+      "seed": 271365546,
+      "max_steps": 25
+    },
+    "regret": 0.2984418231362381,
+    "solve_rate": 0.14922091156811906,
+    "seen_count": 3
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0011_79f622f388",
+      "topology": "deep_chain",
+      "fault_primary": "clock_skew",
+      "fault_secondary": "cert_expiry",
+      "inject_service": "checkout-service",
+      "latency_ms": 5000,
+      "blast_radius": 0.7,
+      "metric_noise": 0.1,
+      "red_herring": "unrelated_alert",
+      "deploy_window": "none",
+      "schema_drift": "none",
+      "seed": 1682644868,
+      "max_steps": 25
+    },
+    "regret": 0.7176985963160161,
+    "solve_rate": 0.35884929815800803,
+    "seen_count": 6
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0012_15b81d7697",
+      "topology": "deep_chain",
+      "fault_primary": "replica_lag",
+      "fault_secondary": "cert_expiry",
+      "inject_service": "inventory-service",
+      "latency_ms": 5000,
+      "blast_radius": 0.7,
+      "metric_noise": 0.1,
+      "red_herring": "unrelated_alert",
+      "deploy_window": "none",
+      "schema_drift": "endpoint_version_bump",
+      "seed": 1293307251,
+      "max_steps": 25
+    },
+    "regret": 0.536768343063653,
+    "solve_rate": 0.2683841715318265,
+    "seen_count": 6
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0013_9d121ace33",
+      "topology": "deep_chain",
+      "fault_primary": "cert_expiry",
+      "fault_secondary": "cpu_hog",
+      "inject_service": "inventory-service",
+      "latency_ms": 5000,
+      "blast_radius": 0.7,
+      "metric_noise": 0.1,
+      "red_herring": "unrelated_alert",
+      "deploy_window": "none",
+      "schema_drift": "endpoint_version_bump",
+      "seed": 804650860,
+      "max_steps": 25
+    },
+    "regret": 0.518212376093235,
+    "solve_rate": 0.2591061880466175,
+    "seen_count": 4
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0014_b1b3d6ee85",
+      "topology": "deep_chain",
+      "fault_primary": "cert_expiry",
+      "fault_secondary": "cert_expiry",
+      "inject_service": "checkout-service",
+      "latency_ms": 5000,
+      "blast_radius": 0.7,
+      "metric_noise": 0.1,
+      "red_herring": "unrelated_alert",
+      "deploy_window": "none",
+      "schema_drift": "rename_metric",
+      "seed": 1760218559,
+      "max_steps": 25
+    },
+    "regret": 0.3787309803838179,
+    "solve_rate": 0.18936549019190896,
+    "seen_count": 1
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0015_aab2354c27",
+      "topology": "deep_chain",
+      "fault_primary": "cert_expiry",
+      "fault_secondary": "cert_expiry",
+      "inject_service": "user-service",
+      "latency_ms": 5000,
+      "blast_radius": 0.7,
+      "metric_noise": 0.1,
+      "red_herring": "unrelated_alert",
+      "deploy_window": "none",
+      "schema_drift": "rotate_creds",
+      "seed": 1365336991,
+      "max_steps": 25
+    },
+    "regret": 0.5455398201665981,
+    "solve_rate": 0.27276991008329904,
+    "seen_count": 4
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0016_dd2a5ec62f",
+      "topology": "mesh",
+      "fault_primary": "oom_kill",
+      "fault_secondary": "deadlock",
+      "inject_service": "inventory-service",
+      "latency_ms": 3600,
+      "blast_radius": 0.45,
+      "metric_noise": 0.2,
+      "red_herring": "false_correlation",
+      "deploy_window": "config_change",
+      "schema_drift": "rename_metric",
+      "seed": 476212851,
+      "max_steps": 25
+    },
+    "regret": 0.5957849238813767,
+    "solve_rate": 0.29789246194068836,
+    "seen_count": 6
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0017_4c01d27a23",
+      "topology": "deep_chain",
+      "fault_primary": "deadlock",
+      "fault_secondary": "disk_full",
+      "inject_service": "api-gateway",
+      "latency_ms": 5000,
+      "blast_radius": 0.7,
+      "metric_noise": 0.1,
+      "red_herring": "unrelated_alert",
+      "deploy_window": "none",
+      "schema_drift": "none",
+      "seed": 227608224,
+      "max_steps": 25
+    },
+    "regret": 0.6530326003788882,
+    "solve_rate": 0.3265163001894441,
+    "seen_count": 3
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0018_1a7c8af98f",
+      "topology": "deep_chain",
+      "fault_primary": "deadlock",
+      "fault_secondary": "cert_expiry",
+      "inject_service": "checkout-service",
+      "latency_ms": 5000,
+      "blast_radius": 0.7,
+      "metric_noise": 0.1,
+      "red_herring": "unrelated_alert",
+      "deploy_window": "none",
+      "schema_drift": "none",
+      "seed": 1780501616,
+      "max_steps": 25
+    },
+    "regret": 0.5078031449654177,
+    "solve_rate": 0.25390157248270884,
+    "seen_count": 4
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0019_830e1771fa",
+      "topology": "mesh",
+      "fault_primary": "replica_lag",
+      "fault_secondary": "deadlock",
+      "inject_service": "inventory-service",
+      "latency_ms": 3600,
+      "blast_radius": 0.45,
+      "metric_noise": 0.2,
+      "red_herring": "false_correlation",
+      "deploy_window": "config_change",
+      "schema_drift": "rename_metric",
+      "seed": 1174145173,
+      "max_steps": 25
+    },
+    "regret": 0.5217086632923034,
+    "solve_rate": 0.2608543316461517,
+    "seen_count": 3
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0020_4a8f6391b0",
+      "topology": "deep_chain",
+      "fault_primary": "cert_expiry",
+      "fault_secondary": "cert_expiry",
+      "inject_service": "checkout-service",
+      "latency_ms": 5000,
+      "blast_radius": 0.7,
+      "metric_noise": 0.1,
+      "red_herring": "unrelated_alert",
+      "deploy_window": "none",
+      "schema_drift": "rotate_creds",
+      "seed": 1522711892,
+      "max_steps": 25
+    },
+    "regret": 0.28567333207286505,
+    "solve_rate": 0.14283666603643252,
+    "seen_count": 2
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0021_380a84f756",
+      "topology": "deep_chain",
+      "fault_primary": "clock_skew",
+      "fault_secondary": "cert_expiry",
+      "inject_service": "checkout-service",
+      "latency_ms": 5000,
+      "blast_radius": 0.7,
+      "metric_noise": 0.1,
+      "red_herring": "unrelated_alert",
+      "deploy_window": "none",
+      "schema_drift": "rotate_creds",
+      "seed": 1398287981,
+      "max_steps": 25
+    },
+    "regret": 0.5726101925584544,
+    "solve_rate": 0.2863050962792272,
+    "seen_count": 5
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0022_bb8c250d9f",
+      "topology": "star",
+      "fault_primary": "replica_lag",
+      "fault_secondary": null,
+      "inject_service": "redis-cache",
+      "latency_ms": 2100,
+      "blast_radius": 0.4,
+      "metric_noise": 0.25,
+      "red_herring": "stale_deploy_notice",
+      "deploy_window": "none",
+      "schema_drift": "field_type_change",
+      "seed": 242456587,
+      "max_steps": 25
+    },
+    "regret": 0.9887177032459205,
+    "solve_rate": 0.4943588516229602,
+    "seen_count": 10
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0023_049bf00850",
+      "topology": "deep_chain",
+      "fault_primary": "cert_expiry",
+      "fault_secondary": "cert_expiry",
+      "inject_service": "inventory-service",
+      "latency_ms": 5000,
+      "blast_radius": 0.7,
+      "metric_noise": 0.1,
+      "red_herring": "unrelated_alert",
+      "deploy_window": "none",
+      "schema_drift": "none",
+      "seed": 876726761,
+      "max_steps": 25
+    },
+    "regret": 0.6938319070216583,
+    "solve_rate": 0.34691595351082916,
+    "seen_count": 14
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0024_6e3dcf91ba",
+      "topology": "mesh",
+      "fault_primary": "dns_misconfig",
+      "fault_secondary": "deadlock",
+      "inject_service": "payment-service",
+      "latency_ms": 3600,
+      "blast_radius": 0.45,
+      "metric_noise": 0.2,
+      "red_herring": "false_correlation",
+      "deploy_window": "config_change",
+      "schema_drift": "rename_metric",
+      "seed": 1305048455,
+      "max_steps": 25
+    },
+    "regret": 0.6271609858925588,
+    "solve_rate": 0.3135804929462794,
+    "seen_count": 5
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0025_8f7d0248e1",
+      "topology": "deep_chain",
+      "fault_primary": "oom_kill",
+      "fault_secondary": "cert_expiry",
+      "inject_service": "checkout-service",
+      "latency_ms": 5000,
+      "blast_radius": 0.7,
+      "metric_noise": 0.1,
+      "red_herring": "unrelated_alert",
+      "deploy_window": "none",
+      "schema_drift": "none",
+      "seed": 1902046437,
+      "max_steps": 25
+    },
+    "regret": 0.7256308111482808,
+    "solve_rate": 0.3628154055741404,
+    "seen_count": 4
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0026_6bd1dd6292",
+      "topology": "star",
+      "fault_primary": "replica_lag",
+      "fault_secondary": null,
+      "inject_service": "redis-cache",
+      "latency_ms": 2100,
+      "blast_radius": 0.4,
+      "metric_noise": 0.25,
+      "red_herring": "stale_deploy_notice",
+      "deploy_window": "none",
+      "schema_drift": "new_required_field",
+      "seed": 1983479327,
+      "max_steps": 25
+    },
+    "regret": 0.7830401957587576,
+    "solve_rate": 0.3915200978793788,
+    "seen_count": 8
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0027_45da8c779b",
+      "topology": "mesh",
+      "fault_primary": "dns_misconfig",
+      "fault_secondary": "network_partition",
+      "inject_service": "inventory-service",
+      "latency_ms": 3600,
+      "blast_radius": 0.45,
+      "metric_noise": 0.2,
+      "red_herring": "false_correlation",
+      "deploy_window": "config_change",
+      "schema_drift": "rename_metric",
+      "seed": 1214801941,
+      "max_steps": 25
+    },
+    "regret": 0.42596755168189937,
+    "solve_rate": 0.21298377584094969,
+    "seen_count": 3
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0028_69bc97dfd1",
+      "topology": "deep_chain",
+      "fault_primary": "clock_skew",
+      "fault_secondary": "cert_expiry",
+      "inject_service": "checkout-service",
+      "latency_ms": 5000,
+      "blast_radius": 0.7,
+      "metric_noise": 0.1,
+      "red_herring": "unrelated_alert",
+      "deploy_window": "none",
+      "schema_drift": "field_type_change",
+      "seed": 1084962217,
+      "max_steps": 25
+    },
+    "regret": 0.33807467545097947,
+    "solve_rate": 0.16903733772548973,
+    "seen_count": 1
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0029_50b66e1fc9",
+      "topology": "deep_chain",
+      "fault_primary": "cert_expiry",
+      "fault_secondary": "disk_full",
+      "inject_service": "postgres-primary",
+      "latency_ms": 5000,
+      "blast_radius": 0.7,
+      "metric_noise": 0.1,
+      "red_herring": "unrelated_alert",
+      "deploy_window": "none",
+      "schema_drift": "none",
+      "seed": 928748282,
+      "max_steps": 25
+    },
+    "regret": 0.662577290822518,
+    "solve_rate": 0.331288645411259,
+    "seen_count": 1
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0030_dcb3db647a",
+      "topology": "deep_chain",
+      "fault_primary": "deadlock",
+      "fault_secondary": "disk_full",
+      "inject_service": "redis-cache",
+      "latency_ms": 5000,
+      "blast_radius": 0.7,
+      "metric_noise": 0.1,
+      "red_herring": "unrelated_alert",
+      "deploy_window": "none",
+      "schema_drift": "none",
+      "seed": 829107800,
+      "max_steps": 25
+    },
+    "regret": 0.568364025170726,
+    "solve_rate": 0.284182012585363,
+    "seen_count": 6
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0031_a03b9ffd00",
+      "topology": "diamond",
+      "fault_primary": "gc_pause",
+      "fault_secondary": "network_partition",
+      "inject_service": "checkout-service",
+      "latency_ms": 3900,
+      "blast_radius": 0.8,
+      "metric_noise": 0.35,
+      "red_herring": "flapping_canary",
+      "deploy_window": "recent_deploy",
+      "schema_drift": "endpoint_version_bump",
+      "seed": 1884773076,
+      "max_steps": 25
+    },
+    "regret": 0.1690299800822027,
+    "solve_rate": 0.08451499004110137,
+    "seen_count": 0
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0032_750cc2619a",
+      "topology": "deep_chain",
+      "fault_primary": "clock_skew",
+      "fault_secondary": null,
+      "inject_service": "checkout-service",
+      "latency_ms": 5000,
+      "blast_radius": 0.7,
+      "metric_noise": 0.1,
+      "red_herring": "unrelated_alert",
+      "deploy_window": "none",
+      "schema_drift": "rotate_creds",
+      "seed": 739987371,
+      "max_steps": 25
+    },
+    "regret": 0.9525059442826278,
+    "solve_rate": 0.4762529721413139,
+    "seen_count": 15
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0033_d61c0d23d5",
+      "topology": "diamond",
+      "fault_primary": "http_503_loop",
+      "fault_secondary": "network_partition",
+      "inject_service": "checkout-service",
+      "latency_ms": 3900,
+      "blast_radius": 0.8,
+      "metric_noise": 0.35,
+      "red_herring": "flapping_canary",
+      "deploy_window": "recent_deploy",
+      "schema_drift": "rotate_creds",
+      "seed": 1878151123,
+      "max_steps": 25
+    },
+    "regret": 0.3551141630613961,
+    "solve_rate": 0.17755708153069802,
+    "seen_count": 5
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0034_af7905bff6",
+      "topology": "deep_chain",
+      "fault_primary": "cert_expiry",
+      "fault_secondary": "dns_misconfig",
+      "inject_service": "inventory-service",
+      "latency_ms": 5000,
+      "blast_radius": 0.7,
+      "metric_noise": 0.1,
+      "red_herring": "unrelated_alert",
+      "deploy_window": "none",
+      "schema_drift": "none",
+      "seed": 1177643854,
+      "max_steps": 25
+    },
+    "regret": 0.49537003294003334,
+    "solve_rate": 0.24768501647001667,
+    "seen_count": 2
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0035_b152433663",
+      "topology": "bipartite",
+      "fault_primary": "cache_stampede",
+      "fault_secondary": "network_partition",
+      "inject_service": "redis-cache",
+      "latency_ms": 3100,
+      "blast_radius": 0.55,
+      "metric_noise": 0.3,
+      "red_herring": "old_anomaly",
+      "deploy_window": "flag_flip",
+      "schema_drift": "swap_units",
+      "seed": 649797115,
+      "max_steps": 25
+    },
+    "regret": 0.3761699859319867,
+    "solve_rate": 0.18808499296599335,
+    "seen_count": 4
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0036_da460896a4",
+      "topology": "star",
+      "fault_primary": "replica_lag",
+      "fault_secondary": null,
+      "inject_service": "redis-cache",
+      "latency_ms": 2100,
+      "blast_radius": 0.4,
+      "metric_noise": 0.25,
+      "red_herring": "stale_deploy_notice",
+      "deploy_window": "none",
+      "schema_drift": "rotate_creds",
+      "seed": 34671471,
+      "max_steps": 25
+    },
+    "regret": 0.99244448979478,
+    "solve_rate": 0.50377775510261,
+    "seen_count": 5
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0037_15d0c3f230",
+      "topology": "deep_chain",
+      "fault_primary": "cert_expiry",
+      "fault_secondary": "cache_stampede",
+      "inject_service": "inventory-service",
+      "latency_ms": 5000,
+      "blast_radius": 0.7,
+      "metric_noise": 0.1,
+      "red_herring": "unrelated_alert",
+      "deploy_window": "none",
+      "schema_drift": "none",
+      "seed": 143698345,
+      "max_steps": 25
+    },
+    "regret": 0.6461609778300637,
+    "solve_rate": 0.3230804889150318,
+    "seen_count": 12
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0038_0ad46b6579",
+      "topology": "deep_chain",
+      "fault_primary": "cert_expiry",
+      "fault_secondary": null,
+      "inject_service": "inventory-service",
+      "latency_ms": 5000,
+      "blast_radius": 0.7,
+      "metric_noise": 0.1,
+      "red_herring": "unrelated_alert",
+      "deploy_window": "none",
+      "schema_drift": "none",
+      "seed": 1553842752,
+      "max_steps": 25
+    },
+    "regret": 0.8515557941776637,
+    "solve_rate": 0.5742221029111682,
+    "seen_count": 4
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0039_4283083e65",
+      "topology": "deep_chain",
+      "fault_primary": "disk_full",
+      "fault_secondary": "cert_expiry",
+      "inject_service": "user-service",
+      "latency_ms": 5000,
+      "blast_radius": 0.7,
+      "metric_noise": 0.1,
+      "red_herring": "unrelated_alert",
+      "deploy_window": "none",
+      "schema_drift": "none",
+      "seed": 90493526,
+      "max_steps": 25
+    },
+    "regret": 0.6479734471231315,
+    "solve_rate": 0.32398672356156577,
+    "seen_count": 2
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0040_db34385e57",
+      "topology": "mesh",
+      "fault_primary": "cache_stampede",
+      "fault_secondary": "deadlock",
+      "inject_service": "payment-service",
+      "latency_ms": 3600,
+      "blast_radius": 0.45,
+      "metric_noise": 0.2,
+      "red_herring": "false_correlation",
+      "deploy_window": "config_change",
+      "schema_drift": "rename_metric",
+      "seed": 753396158,
+      "max_steps": 25
+    },
+    "regret": 0.4883416912824756,
+    "solve_rate": 0.2441708456412378,
+    "seen_count": 7
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0041_a7231178f6",
+      "topology": "deep_chain",
+      "fault_primary": "clock_skew",
+      "fault_secondary": "cache_stampede",
+      "inject_service": "checkout-service",
+      "latency_ms": 5000,
+      "blast_radius": 0.7,
+      "metric_noise": 0.1,
+      "red_herring": "unrelated_alert",
+      "deploy_window": "none",
+      "schema_drift": "rotate_creds",
+      "seed": 457940113,
+      "max_steps": 25
+    },
+    "regret": 0.4924596987585752,
+    "solve_rate": 0.24622984937928757,
+    "seen_count": 2
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0042_bc247fe025",
+      "topology": "deep_chain",
+      "fault_primary": "clock_skew",
+      "fault_secondary": "dns_misconfig",
+      "inject_service": "checkout-service",
+      "latency_ms": 5000,
+      "blast_radius": 0.7,
+      "metric_noise": 0.1,
+      "red_herring": "unrelated_alert",
+      "deploy_window": "none",
+      "schema_drift": "rotate_creds",
+      "seed": 1620459332,
+      "max_steps": 25
+    },
+    "regret": 0.49842967646935765,
+    "solve_rate": 0.24921483823467883,
+    "seen_count": 4
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0043_89f7d50e40",
+      "topology": "bipartite",
+      "fault_primary": "clock_skew",
+      "fault_secondary": null,
+      "inject_service": "redis-cache",
+      "latency_ms": 3100,
+      "blast_radius": 0.55,
+      "metric_noise": 0.3,
+      "red_herring": "old_anomaly",
+      "deploy_window": "flag_flip",
+      "schema_drift": "swap_units",
+      "seed": 35589610,
+      "max_steps": 25
+    },
+    "regret": 0.9075059974787227,
+    "solve_rate": 0.45375299873936137,
+    "seen_count": 4
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0044_ba88c60cb1",
+      "topology": "deep_chain",
+      "fault_primary": "clock_skew",
+      "fault_secondary": null,
+      "inject_service": "inventory-service",
+      "latency_ms": 5000,
+      "blast_radius": 0.7,
+      "metric_noise": 0.1,
+      "red_herring": "unrelated_alert",
+      "deploy_window": "none",
+      "schema_drift": "rotate_creds",
+      "seed": 1824073776,
+      "max_steps": 25
+    },
+    "regret": 0.9328649356486964,
+    "solve_rate": 0.4664324678243482,
+    "seen_count": 6
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0045_171392455c",
+      "topology": "deep_chain",
+      "fault_primary": "dns_misconfig",
+      "fault_secondary": "cache_stampede",
+      "inject_service": "inventory-service",
+      "latency_ms": 5000,
+      "blast_radius": 0.7,
+      "metric_noise": 0.1,
+      "red_herring": "unrelated_alert",
+      "deploy_window": "none",
+      "schema_drift": "none",
+      "seed": 1832963502,
+      "max_steps": 25
+    },
+    "regret": 0.6761533589380819,
+    "solve_rate": 0.33807667946904096,
+    "seen_count": 4
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0046_96b6b18e41",
+      "topology": "deep_chain",
+      "fault_primary": "cert_expiry",
+      "fault_secondary": null,
+      "inject_service": "checkout-service",
+      "latency_ms": 5000,
+      "blast_radius": 0.7,
+      "metric_noise": 0.1,
+      "red_herring": "unrelated_alert",
+      "deploy_window": "none",
+      "schema_drift": "rotate_creds",
+      "seed": 99190921,
+      "max_steps": 25
+    },
+    "regret": 0.9962528521276539,
+    "solve_rate": 0.49812642606382695,
+    "seen_count": 7
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0047_ba047400b4",
+      "topology": "deep_chain",
+      "fault_primary": "clock_skew",
+      "fault_secondary": "disk_full",
+      "inject_service": "checkout-service",
+      "latency_ms": 5000,
+      "blast_radius": 0.7,
+      "metric_noise": 0.1,
+      "red_herring": "unrelated_alert",
+      "deploy_window": "none",
+      "schema_drift": "rotate_creds",
+      "seed": 1319704708,
+      "max_steps": 25
+    },
+    "regret": 0.509701024696815,
+    "solve_rate": 0.2548505123484075,
+    "seen_count": 3
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0048_e520bd8ffe",
+      "topology": "deep_chain",
+      "fault_primary": "cert_expiry",
+      "fault_secondary": "cert_expiry",
+      "inject_service": "postgres-primary",
+      "latency_ms": 5000,
+      "blast_radius": 0.7,
+      "metric_noise": 0.1,
+      "red_herring": "unrelated_alert",
+      "deploy_window": "none",
+      "schema_drift": "swap_units",
+      "seed": 1035980034,
+      "max_steps": 25
+    },
+    "regret": 0.4778017172733293,
+    "solve_rate": 0.23890085863666463,
+    "seen_count": 3
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0049_757d8279d3",
+      "topology": "deep_chain",
+      "fault_primary": "cache_stampede",
+      "fault_secondary": "cert_expiry",
+      "inject_service": "user-service",
+      "latency_ms": 5000,
+      "blast_radius": 0.7,
+      "metric_noise": 0.1,
+      "red_herring": "unrelated_alert",
+      "deploy_window": "none",
+      "schema_drift": "rotate_creds",
+      "seed": 580455557,
+      "max_steps": 25
+    },
+    "regret": 0.4635684405823537,
+    "solve_rate": 0.23178422029117685,
+    "seen_count": 2
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0050_32203c3758",
+      "topology": "deep_chain",
+      "fault_primary": "dns_misconfig",
+      "fault_secondary": "dns_misconfig",
+      "inject_service": "inventory-service",
+      "latency_ms": 5000,
+      "blast_radius": 0.7,
+      "metric_noise": 0.1,
+      "red_herring": "unrelated_alert",
+      "deploy_window": "none",
+      "schema_drift": "none",
+      "seed": 155603341,
+      "max_steps": 25
+    },
+    "regret": 0.7320316695832403,
+    "solve_rate": 0.36601583479162014,
+    "seen_count": 5
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0051_72687c8d47",
+      "topology": "deep_chain",
+      "fault_primary": "http_503_loop",
+      "fault_secondary": null,
+      "inject_service": "checkout-service",
+      "latency_ms": 5000,
+      "blast_radius": 0.7,
+      "metric_noise": 0.1,
+      "red_herring": "unrelated_alert",
+      "deploy_window": "none",
+      "schema_drift": "rotate_creds",
+      "seed": 1765520901,
+      "max_steps": 25
+    },
+    "regret": 0.8291885573537214,
+    "solve_rate": 0.4145942786768607,
+    "seen_count": 4
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0052_8b1a058446",
+      "topology": "mesh",
+      "fault_primary": "oom_kill",
+      "fault_secondary": "gc_pause",
+      "inject_service": "inventory-service",
+      "latency_ms": 3600,
+      "blast_radius": 0.45,
+      "metric_noise": 0.2,
+      "red_herring": "false_correlation",
+      "deploy_window": "config_change",
+      "schema_drift": "rename_metric",
+      "seed": 223718328,
+      "max_steps": 25
+    },
+    "regret": 0.49781662274299887,
+    "solve_rate": 0.24890831137149944,
+    "seen_count": 2
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0053_5c306779be",
+      "topology": "deep_chain",
+      "fault_primary": "deadlock",
+      "fault_secondary": "disk_full",
+      "inject_service": "postgres-primary",
+      "latency_ms": 5000,
+      "blast_radius": 0.7,
+      "metric_noise": 0.1,
+      "red_herring": "unrelated_alert",
+      "deploy_window": "none",
+      "schema_drift": "none",
+      "seed": 857114970,
+      "max_steps": 25
+    },
+    "regret": 0.6607089825741913,
+    "solve_rate": 0.33035449128709565,
+    "seen_count": 5
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0054_9cc81aa67d",
+      "topology": "bipartite",
+      "fault_primary": "cache_stampede",
+      "fault_secondary": "network_partition",
+      "inject_service": "user-service",
+      "latency_ms": 3100,
+      "blast_radius": 0.55,
+      "metric_noise": 0.3,
+      "red_herring": "old_anomaly",
+      "deploy_window": "flag_flip",
+      "schema_drift": "swap_units",
+      "seed": 195784887,
+      "max_steps": 25
+    },
+    "regret": 0.5071072779890435,
+    "solve_rate": 0.25355363899452177,
+    "seen_count": 8
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0055_47c9b08005",
+      "topology": "deep_chain",
+      "fault_primary": "replica_lag",
+      "fault_secondary": null,
+      "inject_service": "checkout-service",
+      "latency_ms": 5000,
+      "blast_radius": 0.7,
+      "metric_noise": 0.1,
+      "red_herring": "unrelated_alert",
+      "deploy_window": "none",
+      "schema_drift": "rotate_creds",
+      "seed": 1125886088,
+      "max_steps": 25
+    },
+    "regret": 0.96715554266123,
+    "solve_rate": 0.483577771330615,
+    "seen_count": 6
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0056_113d022430",
+      "topology": "deep_chain",
+      "fault_primary": "http_503_loop",
+      "fault_secondary": "cert_expiry",
+      "inject_service": "inventory-service",
+      "latency_ms": 5000,
+      "blast_radius": 0.7,
+      "metric_noise": 0.1,
+      "red_herring": "unrelated_alert",
+      "deploy_window": "none",
+      "schema_drift": "none",
+      "seed": 743097166,
+      "max_steps": 25
+    },
+    "regret": 0.7137680140450504,
+    "solve_rate": 0.3568840070225252,
+    "seen_count": 2
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0057_70c2b4aa17",
+      "topology": "deep_chain",
+      "fault_primary": "replica_lag",
+      "fault_secondary": "dns_misconfig",
+      "inject_service": "checkout-service",
+      "latency_ms": 5000,
+      "blast_radius": 0.7,
+      "metric_noise": 0.1,
+      "red_herring": "unrelated_alert",
+      "deploy_window": "none",
+      "schema_drift": "rotate_creds",
+      "seed": 766525666,
+      "max_steps": 25
+    },
+    "regret": 0.5728084718500923,
+    "solve_rate": 0.28640423592504616,
+    "seen_count": 1
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0058_39f9552b4c",
+      "topology": "deep_chain",
+      "fault_primary": "clock_skew",
+      "fault_secondary": "dns_misconfig",
+      "inject_service": "api-gateway",
+      "latency_ms": 5000,
+      "blast_radius": 0.7,
+      "metric_noise": 0.1,
+      "red_herring": "unrelated_alert",
+      "deploy_window": "none",
+      "schema_drift": "rotate_creds",
+      "seed": 1054081967,
+      "max_steps": 25
+    },
+    "regret": 0.4383201302837919,
+    "solve_rate": 0.21916006514189595,
+    "seen_count": 2
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0059_15bd1795ef",
+      "topology": "deep_chain",
+      "fault_primary": "replica_lag",
+      "fault_secondary": "dns_misconfig",
+      "inject_service": "checkout-service",
+      "latency_ms": 5000,
+      "blast_radius": 0.7,
+      "metric_noise": 0.1,
+      "red_herring": "unrelated_alert",
+      "deploy_window": "none",
+      "schema_drift": "swap_units",
+      "seed": 107543428,
+      "max_steps": 25
+    },
+    "regret": 0.3962904262620879,
+    "solve_rate": 0.19814521313104394,
+    "seen_count": 1
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0060_1971d69fd0",
+      "topology": "star",
+      "fault_primary": "replica_lag",
+      "fault_secondary": "cache_stampede",
+      "inject_service": "postgres-primary",
+      "latency_ms": 2100,
+      "blast_radius": 0.4,
+      "metric_noise": 0.25,
+      "red_herring": "stale_deploy_notice",
+      "deploy_window": "none",
+      "schema_drift": "field_type_change",
+      "seed": 1310903544,
+      "max_steps": 25
+    },
+    "regret": 0.5640349623330084,
+    "solve_rate": 0.2820174811665042,
+    "seen_count": 7
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0061_072c247204",
+      "topology": "mesh",
+      "fault_primary": "cpu_hog",
+      "fault_secondary": "deadlock",
+      "inject_service": "payment-service",
+      "latency_ms": 3600,
+      "blast_radius": 0.45,
+      "metric_noise": 0.2,
+      "red_herring": "false_correlation",
+      "deploy_window": "config_change",
+      "schema_drift": "rename_metric",
+      "seed": 380778962,
+      "max_steps": 25
+    },
+    "regret": 0.6207006409898651,
+    "solve_rate": 0.31035032049493255,
+    "seen_count": 4
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0062_5873fbe749",
+      "topology": "deep_chain",
+      "fault_primary": "cert_expiry",
+      "fault_secondary": "cache_stampede",
+      "inject_service": "inventory-service",
+      "latency_ms": 5000,
+      "blast_radius": 0.7,
+      "metric_noise": 0.1,
+      "red_herring": "unrelated_alert",
+      "deploy_window": "none",
+      "schema_drift": "endpoint_version_bump",
+      "seed": 1328407500,
+      "max_steps": 25
+    },
+    "regret": 0.30017052239392805,
+    "solve_rate": 0.15008526119696403,
+    "seen_count": 1
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0063_44b49b1f63",
+      "topology": "deep_chain",
+      "fault_primary": "deadlock",
+      "fault_secondary": "cache_stampede",
+      "inject_service": "redis-cache",
+      "latency_ms": 5000,
+      "blast_radius": 0.7,
+      "metric_noise": 0.1,
+      "red_herring": "unrelated_alert",
+      "deploy_window": "none",
+      "schema_drift": "none",
+      "seed": 794897078,
+      "max_steps": 25
+    },
+    "regret": 0.6320102362588382,
+    "solve_rate": 0.3160051181294191,
+    "seen_count": 4
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0064_ed2b0e6f8e",
+      "topology": "star",
+      "fault_primary": "dns_misconfig",
+      "fault_secondary": "cache_stampede",
+      "inject_service": "postgres-primary",
+      "latency_ms": 2100,
+      "blast_radius": 0.4,
+      "metric_noise": 0.25,
+      "red_herring": "stale_deploy_notice",
+      "deploy_window": "none",
+      "schema_drift": "field_type_change",
+      "seed": 389487116,
+      "max_steps": 25
+    },
+    "regret": 0.5916818841865215,
+    "solve_rate": 0.29584094209326073,
+    "seen_count": 2
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0065_4ccb635cd6",
+      "topology": "deep_chain",
+      "fault_primary": "oom_kill",
+      "fault_secondary": "cert_expiry",
+      "inject_service": "checkout-service",
+      "latency_ms": 5000,
+      "blast_radius": 0.7,
+      "metric_noise": 0.1,
+      "red_herring": "unrelated_alert",
+      "deploy_window": "none",
+      "schema_drift": "rename_metric",
+      "seed": 1472079488,
+      "max_steps": 25
+    },
+    "regret": 0.4466329331654558,
+    "solve_rate": 0.2233164665827279,
+    "seen_count": 6
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0066_09c147ce50",
+      "topology": "diamond",
+      "fault_primary": "http_503_loop",
+      "fault_secondary": null,
+      "inject_service": "redis-cache",
+      "latency_ms": 3900,
+      "blast_radius": 0.8,
+      "metric_noise": 0.35,
+      "red_herring": "flapping_canary",
+      "deploy_window": "recent_deploy",
+      "schema_drift": "endpoint_version_bump",
+      "seed": 174760488,
+      "max_steps": 25
+    },
+    "regret": 0.8744413781751099,
+    "solve_rate": 0.43722068908755496,
+    "seen_count": 5
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0067_d3da128c84",
+      "topology": "deep_chain",
+      "fault_primary": "http_503_loop",
+      "fault_secondary": null,
+      "inject_service": "inventory-service",
+      "latency_ms": 5000,
+      "blast_radius": 0.7,
+      "metric_noise": 0.1,
+      "red_herring": "unrelated_alert",
+      "deploy_window": "none",
+      "schema_drift": "rotate_creds",
+      "seed": 1692386639,
+      "max_steps": 25
+    },
+    "regret": 0.8659162281054227,
+    "solve_rate": 0.43295811405271134,
+    "seen_count": 6
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0068_9c5f55c419",
+      "topology": "deep_chain",
+      "fault_primary": "replica_lag",
+      "fault_secondary": "cert_expiry",
+      "inject_service": "inventory-service",
+      "latency_ms": 5000,
+      "blast_radius": 0.7,
+      "metric_noise": 0.1,
+      "red_herring": "unrelated_alert",
+      "deploy_window": "none",
+      "schema_drift": "none",
+      "seed": 123019344,
+      "max_steps": 25
+    },
+    "regret": 0.6434203594674242,
+    "solve_rate": 0.3217101797337121,
+    "seen_count": 5
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0069_284c1e4765",
+      "topology": "deep_chain",
+      "fault_primary": "cpu_hog",
+      "fault_secondary": null,
+      "inject_service": "checkout-service",
+      "latency_ms": 5000,
+      "blast_radius": 0.7,
+      "metric_noise": 0.1,
+      "red_herring": "unrelated_alert",
+      "deploy_window": "none",
+      "schema_drift": "rotate_creds",
+      "seed": 1502407665,
+      "max_steps": 25
+    },
+    "regret": 0.9757220649939203,
+    "solve_rate": 0.48786103249696017,
+    "seen_count": 9
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0070_6f15ce49e6",
+      "topology": "mesh",
+      "fault_primary": "dns_misconfig",
+      "fault_secondary": "deadlock",
+      "inject_service": "user-service",
+      "latency_ms": 3600,
+      "blast_radius": 0.45,
+      "metric_noise": 0.2,
+      "red_herring": "false_correlation",
+      "deploy_window": "config_change",
+      "schema_drift": "rename_metric",
+      "seed": 867896486,
+      "max_steps": 25
+    },
+    "regret": 0.6015292512843843,
+    "solve_rate": 0.30076462564219214,
+    "seen_count": 2
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0071_1e93cc01f7",
+      "topology": "star",
+      "fault_primary": "replica_lag",
+      "fault_secondary": null,
+      "inject_service": "inventory-service",
+      "latency_ms": 2100,
+      "blast_radius": 0.4,
+      "metric_noise": 0.25,
+      "red_herring": "stale_deploy_notice",
+      "deploy_window": "none",
+      "schema_drift": "rotate_creds",
+      "seed": 796233597,
+      "max_steps": 25
+    },
+    "regret": 0.8296705005444818,
+    "solve_rate": 0.5851647497277591,
+    "seen_count": 4
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0072_696576af3b",
+      "topology": "deep_chain",
+      "fault_primary": "replica_lag",
+      "fault_secondary": null,
+      "inject_service": "checkout-service",
+      "latency_ms": 5000,
+      "blast_radius": 0.7,
+      "metric_noise": 0.1,
+      "red_herring": "unrelated_alert",
+      "deploy_window": "none",
+      "schema_drift": "endpoint_version_bump",
+      "seed": 1280371234,
+      "max_steps": 25
+    },
+    "regret": 0.98396045731587,
+    "solve_rate": 0.491980228657935,
+    "seen_count": 6
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0073_d1bc0f7b04",
+      "topology": "mesh",
+      "fault_primary": "cpu_hog",
+      "fault_secondary": "deadlock",
+      "inject_service": "user-service",
+      "latency_ms": 3600,
+      "blast_radius": 0.45,
+      "metric_noise": 0.2,
+      "red_herring": "false_correlation",
+      "deploy_window": "config_change",
+      "schema_drift": "rename_metric",
+      "seed": 424907298,
+      "max_steps": 25
+    },
+    "regret": 0.6045735711520681,
+    "solve_rate": 0.30228678557603406,
+    "seen_count": 1
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0074_17cddf05c0",
+      "topology": "deep_chain",
+      "fault_primary": "deadlock",
+      "fault_secondary": "disk_full",
+      "inject_service": "payment-service",
+      "latency_ms": 5000,
+      "blast_radius": 0.7,
+      "metric_noise": 0.1,
+      "red_herring": "unrelated_alert",
+      "deploy_window": "none",
+      "schema_drift": "none",
+      "seed": 700469502,
+      "max_steps": 25
+    },
+    "regret": 0.6645921546831298,
+    "solve_rate": 0.3322960773415649,
+    "seen_count": 4
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0075_7fb92311e1",
+      "topology": "deep_chain",
+      "fault_primary": "dns_misconfig",
+      "fault_secondary": "cache_stampede",
+      "inject_service": "redis-cache",
+      "latency_ms": 5000,
+      "blast_radius": 0.7,
+      "metric_noise": 0.1,
+      "red_herring": "unrelated_alert",
+      "deploy_window": "none",
+      "schema_drift": "none",
+      "seed": 1170658191,
+      "max_steps": 25
+    },
+    "regret": 0.5528473141948006,
+    "solve_rate": 0.2764236570974003,
+    "seen_count": 4
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0076_3fe299d620",
+      "topology": "deep_chain",
+      "fault_primary": "clock_skew",
+      "fault_secondary": null,
+      "inject_service": "api-gateway",
+      "latency_ms": 5000,
+      "blast_radius": 0.7,
+      "metric_noise": 0.1,
+      "red_herring": "unrelated_alert",
+      "deploy_window": "none",
+      "schema_drift": "none",
+      "seed": 1203457400,
+      "max_steps": 25
+    },
+    "regret": 0.7608652605808739,
+    "solve_rate": 0.619567369709563,
+    "seen_count": 5
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0077_5cfec9b929",
+      "topology": "star",
+      "fault_primary": "replica_lag",
+      "fault_secondary": "cpu_hog",
+      "inject_service": "inventory-service",
+      "latency_ms": 2100,
+      "blast_radius": 0.4,
+      "metric_noise": 0.25,
+      "red_herring": "stale_deploy_notice",
+      "deploy_window": "none",
+      "schema_drift": "rotate_creds",
+      "seed": 591872173,
+      "max_steps": 25
+    },
+    "regret": 0.5447920630251326,
+    "solve_rate": 0.2723960315125663,
+    "seen_count": 0
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0078_0fef0f84e0",
+      "topology": "deep_chain",
+      "fault_primary": "http_503_loop",
+      "fault_secondary": "disk_full",
+      "inject_service": "checkout-service",
+      "latency_ms": 5000,
+      "blast_radius": 0.7,
+      "metric_noise": 0.1,
+      "red_herring": "unrelated_alert",
+      "deploy_window": "none",
+      "schema_drift": "rotate_creds",
+      "seed": 1606014621,
+      "max_steps": 25
+    },
+    "regret": 0.5548507855071992,
+    "solve_rate": 0.2774253927535996,
+    "seen_count": 2
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0079_635a04d0f0",
+      "topology": "star",
+      "fault_primary": "replica_lag",
+      "fault_secondary": "dns_misconfig",
+      "inject_service": "postgres-primary",
+      "latency_ms": 2100,
+      "blast_radius": 0.4,
+      "metric_noise": 0.25,
+      "red_herring": "stale_deploy_notice",
+      "deploy_window": "none",
+      "schema_drift": "field_type_change",
+      "seed": 1599254638,
+      "max_steps": 25
+    },
+    "regret": 0.43952824241009125,
+    "solve_rate": 0.21976412120504565,
+    "seen_count": 0
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0080_0b5ebf887a",
+      "topology": "star",
+      "fault_primary": "replica_lag",
+      "fault_secondary": null,
+      "inject_service": "user-service",
+      "latency_ms": 2100,
+      "blast_radius": 0.4,
+      "metric_noise": 0.25,
+      "red_herring": "stale_deploy_notice",
+      "deploy_window": "none",
+      "schema_drift": "field_type_change",
+      "seed": 814870601,
+      "max_steps": 25
+    },
+    "regret": 0.8538893215308971,
+    "solve_rate": 0.5730553392345514,
+    "seen_count": 4
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0081_9d268fb321",
+      "topology": "mesh",
+      "fault_primary": "dns_misconfig",
+      "fault_secondary": "cache_stampede",
+      "inject_service": "inventory-service",
+      "latency_ms": 3600,
+      "blast_radius": 0.45,
+      "metric_noise": 0.2,
+      "red_herring": "false_correlation",
+      "deploy_window": "config_change",
+      "schema_drift": "rename_metric",
+      "seed": 1323303414,
+      "max_steps": 25
+    },
+    "regret": 0.3219719971632852,
+    "solve_rate": 0.1609859985816426,
+    "seen_count": 1
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0082_c20a9af617",
+      "topology": "deep_chain",
+      "fault_primary": "disk_full",
+      "fault_secondary": null,
+      "inject_service": "checkout-service",
+      "latency_ms": 5000,
+      "blast_radius": 0.7,
+      "metric_noise": 0.1,
+      "red_herring": "unrelated_alert",
+      "deploy_window": "none",
+      "schema_drift": "none",
+      "seed": 1195665021,
+      "max_steps": 25
+    },
+    "regret": 0.8609545949698634,
+    "solve_rate": 0.5695227025150683,
+    "seen_count": 2
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0083_2b0acf4515",
+      "topology": "deep_chain",
+      "fault_primary": "cpu_hog",
+      "fault_secondary": null,
+      "inject_service": "checkout-service",
+      "latency_ms": 5000,
+      "blast_radius": 0.7,
+      "metric_noise": 0.1,
+      "red_herring": "unrelated_alert",
+      "deploy_window": "none",
+      "schema_drift": "endpoint_version_bump",
+      "seed": 566839298,
+      "max_steps": 25
+    },
+    "regret": 0.8693441661364745,
+    "solve_rate": 0.5653279169317628,
+    "seen_count": 2
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0084_f80f98d64e",
+      "topology": "deep_chain",
+      "fault_primary": "cert_expiry",
+      "fault_secondary": "cert_expiry",
+      "inject_service": "api-gateway",
+      "latency_ms": 5000,
+      "blast_radius": 0.7,
+      "metric_noise": 0.1,
+      "red_herring": "unrelated_alert",
+      "deploy_window": "none",
+      "schema_drift": "none",
+      "seed": 271378525,
+      "max_steps": 25
+    },
+    "regret": 0.7704273313239896,
+    "solve_rate": 0.3852136656619948,
+    "seen_count": 5
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0085_6d751dbf74",
+      "topology": "deep_chain",
+      "fault_primary": "deadlock",
+      "fault_secondary": "disk_full",
+      "inject_service": "user-service",
+      "latency_ms": 5000,
+      "blast_radius": 0.7,
+      "metric_noise": 0.1,
+      "red_herring": "unrelated_alert",
+      "deploy_window": "none",
+      "schema_drift": "none",
+      "seed": 455535753,
+      "max_steps": 25
+    },
+    "regret": 0.6976845994001003,
+    "solve_rate": 0.34884229970005015,
+    "seen_count": 2
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0086_68fcf7d31e",
+      "topology": "deep_chain",
+      "fault_primary": "cert_expiry",
+      "fault_secondary": "disk_full",
+      "inject_service": "redis-cache",
+      "latency_ms": 5000,
+      "blast_radius": 0.7,
+      "metric_noise": 0.1,
+      "red_herring": "unrelated_alert",
+      "deploy_window": "none",
+      "schema_drift": "none",
+      "seed": 1189060062,
+      "max_steps": 25
+    },
+    "regret": 0.6304857104240633,
+    "solve_rate": 0.31524285521203166,
+    "seen_count": 3
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0087_af958e1449",
+      "topology": "deep_chain",
+      "fault_primary": "dns_misconfig",
+      "fault_secondary": "cache_stampede",
+      "inject_service": "postgres-primary",
+      "latency_ms": 5000,
+      "blast_radius": 0.7,
+      "metric_noise": 0.1,
+      "red_herring": "unrelated_alert",
+      "deploy_window": "none",
+      "schema_drift": "none",
+      "seed": 1108816814,
+      "max_steps": 25
+    },
+    "regret": 0.6207311848936709,
+    "solve_rate": 0.3103655924468354,
+    "seen_count": 2
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0088_41bc69ab8d",
+      "topology": "deep_chain",
+      "fault_primary": "cert_expiry",
+      "fault_secondary": "gc_pause",
+      "inject_service": "inventory-service",
+      "latency_ms": 5000,
+      "blast_radius": 0.7,
+      "metric_noise": 0.1,
+      "red_herring": "unrelated_alert",
+      "deploy_window": "none",
+      "schema_drift": "endpoint_version_bump",
+      "seed": 389161683,
+      "max_steps": 25
+    },
+    "regret": 0.3539288011395205,
+    "solve_rate": 0.1769644005697603,
+    "seen_count": 0
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0089_3526439777",
+      "topology": "deep_chain",
+      "fault_primary": "replica_lag",
+      "fault_secondary": "cert_expiry",
+      "inject_service": "inventory-service",
+      "latency_ms": 5000,
+      "blast_radius": 0.7,
+      "metric_noise": 0.1,
+      "red_herring": "unrelated_alert",
+      "deploy_window": "none",
+      "schema_drift": "swap_units",
+      "seed": 1298137905,
+      "max_steps": 25
+    },
+    "regret": 0.27392791791483107,
+    "solve_rate": 0.13696395895741556,
+    "seen_count": 2
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0090_c48d3a74a0",
+      "topology": "deep_chain",
+      "fault_primary": "deadlock",
+      "fault_secondary": "disk_full",
+      "inject_service": "postgres-primary",
+      "latency_ms": 5000,
+      "blast_radius": 0.7,
+      "metric_noise": 0.1,
+      "red_herring": "unrelated_alert",
+      "deploy_window": "none",
+      "schema_drift": "field_type_change",
+      "seed": 1978876837,
+      "max_steps": 25
+    },
+    "regret": 0.2703504511062105,
+    "solve_rate": 0.13517522555310524,
+    "seen_count": 4
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0091_824aa9bd89",
+      "topology": "deep_chain",
+      "fault_primary": "deadlock",
+      "fault_secondary": "cache_stampede",
+      "inject_service": "postgres-primary",
+      "latency_ms": 5000,
+      "blast_radius": 0.7,
+      "metric_noise": 0.1,
+      "red_herring": "unrelated_alert",
+      "deploy_window": "none",
+      "schema_drift": "none",
+      "seed": 852992653,
+      "max_steps": 25
+    },
+    "regret": 0.4959812490377524,
+    "solve_rate": 0.24799062451887624,
+    "seen_count": 1
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0092_4eb403c031",
+      "topology": "deep_chain",
+      "fault_primary": "cert_expiry",
+      "fault_secondary": null,
+      "inject_service": "postgres-primary",
+      "latency_ms": 5000,
+      "blast_radius": 0.7,
+      "metric_noise": 0.1,
+      "red_herring": "unrelated_alert",
+      "deploy_window": "none",
+      "schema_drift": "rotate_creds",
+      "seed": 551439035,
+      "max_steps": 25
+    },
+    "regret": 0.8907694195486846,
+    "solve_rate": 0.4453847097743423,
+    "seen_count": 3
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0093_bc17ff1389",
+      "topology": "deep_chain",
+      "fault_primary": "cpu_hog",
+      "fault_secondary": "cert_expiry",
+      "inject_service": "checkout-service",
+      "latency_ms": 5000,
+      "blast_radius": 0.7,
+      "metric_noise": 0.1,
+      "red_herring": "unrelated_alert",
+      "deploy_window": "none",
+      "schema_drift": "rotate_creds",
+      "seed": 193837794,
+      "max_steps": 25
+    },
+    "regret": 0.3930700022504232,
+    "solve_rate": 0.1965350011252116,
+    "seen_count": 2
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0094_c3ec7cf9d4",
+      "topology": "deep_chain",
+      "fault_primary": "clock_skew",
+      "fault_secondary": "disk_full",
+      "inject_service": "checkout-service",
+      "latency_ms": 5000,
+      "blast_radius": 0.7,
+      "metric_noise": 0.1,
+      "red_herring": "unrelated_alert",
+      "deploy_window": "none",
+      "schema_drift": "none",
+      "seed": 1255987100,
+      "max_steps": 25
+    },
+    "regret": 0.6928316335684672,
+    "solve_rate": 0.3464158167842336,
+    "seen_count": 3
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0095_c03528a815",
+      "topology": "deep_chain",
+      "fault_primary": "dns_misconfig",
+      "fault_secondary": "gc_pause",
+      "inject_service": "inventory-service",
+      "latency_ms": 5000,
+      "blast_radius": 0.7,
+      "metric_noise": 0.1,
+      "red_herring": "unrelated_alert",
+      "deploy_window": "none",
+      "schema_drift": "none",
+      "seed": 556211019,
+      "max_steps": 25
+    },
+    "regret": 0.49946671391245157,
+    "solve_rate": 0.2497333569562258,
+    "seen_count": 3
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0096_a5fac4a571",
+      "topology": "star",
+      "fault_primary": "replica_lag",
+      "fault_secondary": "disk_full",
+      "inject_service": "postgres-primary",
+      "latency_ms": 2100,
+      "blast_radius": 0.4,
+      "metric_noise": 0.25,
+      "red_herring": "stale_deploy_notice",
+      "deploy_window": "none",
+      "schema_drift": "field_type_change",
+      "seed": 1432331060,
+      "max_steps": 25
+    },
+    "regret": 0.5028886759346465,
+    "solve_rate": 0.25144433796732324,
+    "seen_count": 1
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0097_4b82819b28",
+      "topology": "deep_chain",
+      "fault_primary": "cert_expiry",
+      "fault_secondary": "clock_skew",
+      "inject_service": "checkout-service",
+      "latency_ms": 5000,
+      "blast_radius": 0.7,
+      "metric_noise": 0.1,
+      "red_herring": "unrelated_alert",
+      "deploy_window": "none",
+      "schema_drift": "rotate_creds",
+      "seed": 1884601203,
+      "max_steps": 25
+    },
+    "regret": 0.4365791736862138,
+    "solve_rate": 0.2182895868431069,
+    "seen_count": 0
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0098_c02fbfabaf",
+      "topology": "star",
+      "fault_primary": "replica_lag",
+      "fault_secondary": null,
+      "inject_service": "postgres-primary",
+      "latency_ms": 2100,
+      "blast_radius": 0.4,
+      "metric_noise": 0.25,
+      "red_herring": "stale_deploy_notice",
+      "deploy_window": "none",
+      "schema_drift": "rotate_creds",
+      "seed": 1256731343,
+      "max_steps": 25
+    },
+    "regret": 0.7659672536099573,
+    "solve_rate": 0.38298362680497866,
+    "seen_count": 3
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0099_19a4df519f",
+      "topology": "mesh",
+      "fault_primary": "dns_misconfig",
+      "fault_secondary": "cache_stampede",
+      "inject_service": "user-service",
+      "latency_ms": 3600,
+      "blast_radius": 0.45,
+      "metric_noise": 0.2,
+      "red_herring": "false_correlation",
+      "deploy_window": "config_change",
+      "schema_drift": "rename_metric",
+      "seed": 1352675412,
+      "max_steps": 25
+    },
+    "regret": 0.40045892244585113,
+    "solve_rate": 0.20022946122292556,
+    "seen_count": 1
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0100_29722118ce",
+      "topology": "deep_chain",
+      "fault_primary": "cache_stampede",
+      "fault_secondary": "cache_stampede",
+      "inject_service": "inventory-service",
+      "latency_ms": 5000,
+      "blast_radius": 0.7,
+      "metric_noise": 0.1,
+      "red_herring": "unrelated_alert",
+      "deploy_window": "none",
+      "schema_drift": "none",
+      "seed": 1696744526,
+      "max_steps": 25
+    },
+    "regret": 0.6922710683454583,
+    "solve_rate": 0.34613553417272913,
+    "seen_count": 2
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0101_8a4bec28db",
+      "topology": "deep_chain",
+      "fault_primary": "cert_expiry",
+      "fault_secondary": "cert_expiry",
+      "inject_service": "payment-service",
+      "latency_ms": 5000,
+      "blast_radius": 0.7,
+      "metric_noise": 0.1,
+      "red_herring": "unrelated_alert",
+      "deploy_window": "none",
+      "schema_drift": "none",
+      "seed": 1886845159,
+      "max_steps": 25
+    },
+    "regret": 0.5083489058008942,
+    "solve_rate": 0.2541744529004471,
+    "seen_count": 1
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0102_c5e9c27eca",
+      "topology": "deep_chain",
+      "fault_primary": "replica_lag",
+      "fault_secondary": "clock_skew",
+      "inject_service": "checkout-service",
+      "latency_ms": 5000,
+      "blast_radius": 0.7,
+      "metric_noise": 0.1,
+      "red_herring": "unrelated_alert",
+      "deploy_window": "none",
+      "schema_drift": "rotate_creds",
+      "seed": 172175310,
+      "max_steps": 25
+    },
+    "regret": 0.5415889847419492,
+    "solve_rate": 0.2707944923709746,
+    "seen_count": 2
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0103_d19af36cf2",
+      "topology": "deep_chain",
+      "fault_primary": "cpu_hog",
+      "fault_secondary": "cache_stampede",
+      "inject_service": "checkout-service",
+      "latency_ms": 5000,
+      "blast_radius": 0.7,
+      "metric_noise": 0.1,
+      "red_herring": "unrelated_alert",
+      "deploy_window": "none",
+      "schema_drift": "endpoint_version_bump",
+      "seed": 970457867,
+      "max_steps": 25
+    },
+    "regret": 0.3170113085315024,
+    "solve_rate": 0.1585056542657512,
+    "seen_count": 1
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0104_a869031606",
+      "topology": "bipartite",
+      "fault_primary": "cache_stampede",
+      "fault_secondary": "network_partition",
+      "inject_service": "user-service",
+      "latency_ms": 3100,
+      "blast_radius": 0.55,
+      "metric_noise": 0.3,
+      "red_herring": "old_anomaly",
+      "deploy_window": "flag_flip",
+      "schema_drift": "rotate_creds",
+      "seed": 518546942,
+      "max_steps": 25
+    },
+    "regret": 0.5121537692852975,
+    "solve_rate": 0.25607688464264877,
+    "seen_count": 3
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0105_9ee881b5b9",
+      "topology": "deep_chain",
+      "fault_primary": "oom_kill",
+      "fault_secondary": "cert_expiry",
+      "inject_service": "postgres-primary",
+      "latency_ms": 5000,
+      "blast_radius": 0.7,
+      "metric_noise": 0.1,
+      "red_herring": "unrelated_alert",
+      "deploy_window": "none",
+      "schema_drift": "rename_metric",
+      "seed": 1650463099,
+      "max_steps": 25
+    },
+    "regret": 0.47444701827202085,
+    "solve_rate": 0.23722350913601042,
+    "seen_count": 2
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0106_3d8fb88444",
+      "topology": "deep_chain",
+      "fault_primary": "cert_expiry",
+      "fault_secondary": "cache_stampede",
+      "inject_service": "redis-cache",
+      "latency_ms": 5000,
+      "blast_radius": 0.7,
+      "metric_noise": 0.1,
+      "red_herring": "unrelated_alert",
+      "deploy_window": "none",
+      "schema_drift": "none",
+      "seed": 456317033,
+      "max_steps": 25
+    },
+    "regret": 0.7619391623490158,
+    "solve_rate": 0.3809695811745079,
+    "seen_count": 1
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0107_f4be1bac73",
+      "topology": "deep_chain",
+      "fault_primary": "network_partition",
+      "fault_secondary": "cpu_hog",
+      "inject_service": "inventory-service",
+      "latency_ms": 5000,
+      "blast_radius": 0.7,
+      "metric_noise": 0.1,
+      "red_herring": "unrelated_alert",
+      "deploy_window": "none",
+      "schema_drift": "endpoint_version_bump",
+      "seed": 1121725555,
+      "max_steps": 25
+    },
+    "regret": 0.49950373283552985,
+    "solve_rate": 0.24975186641776492,
+    "seen_count": 2
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0108_2b1094d421",
+      "topology": "bipartite",
+      "fault_primary": "cache_stampede",
+      "fault_secondary": "network_partition",
+      "inject_service": "checkout-service",
+      "latency_ms": 3100,
+      "blast_radius": 0.55,
+      "metric_noise": 0.3,
+      "red_herring": "old_anomaly",
+      "deploy_window": "flag_flip",
+      "schema_drift": "swap_units",
+      "seed": 480377428,
+      "max_steps": 25
+    },
+    "regret": 0.5414671242939937,
+    "solve_rate": 0.27073356214699684,
+    "seen_count": 1
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0109_61eca74ce9",
+      "topology": "star",
+      "fault_primary": "replica_lag",
+      "fault_secondary": "clock_skew",
+      "inject_service": "user-service",
+      "latency_ms": 2100,
+      "blast_radius": 0.4,
+      "metric_noise": 0.25,
+      "red_herring": "stale_deploy_notice",
+      "deploy_window": "none",
+      "schema_drift": "field_type_change",
+      "seed": 1899892297,
+      "max_steps": 25
+    },
+    "regret": 0.38235321129464983,
+    "solve_rate": 0.19117660564732492,
+    "seen_count": 0
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0110_e99fef9024",
+      "topology": "star",
+      "fault_primary": "replica_lag",
+      "fault_secondary": "oom_kill",
+      "inject_service": "user-service",
+      "latency_ms": 2100,
+      "blast_radius": 0.4,
+      "metric_noise": 0.25,
+      "red_herring": "stale_deploy_notice",
+      "deploy_window": "none",
+      "schema_drift": "field_type_change",
+      "seed": 1036707895,
+      "max_steps": 25
+    },
+    "regret": 0.32674048478851514,
+    "solve_rate": 0.16337024239425754,
+    "seen_count": 0
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0111_184be77349",
+      "topology": "mesh",
+      "fault_primary": "deadlock",
+      "fault_secondary": "deadlock",
+      "inject_service": "payment-service",
+      "latency_ms": 3600,
+      "blast_radius": 0.45,
+      "metric_noise": 0.2,
+      "red_herring": "false_correlation",
+      "deploy_window": "config_change",
+      "schema_drift": "rename_metric",
+      "seed": 152481799,
+      "max_steps": 25
+    },
+    "regret": 0.3387702285048385,
+    "solve_rate": 0.16938511425241926,
+    "seen_count": 0
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0112_29110fced2",
+      "topology": "bipartite",
+      "fault_primary": "deadlock",
+      "fault_secondary": null,
+      "inject_service": "redis-cache",
+      "latency_ms": 3100,
+      "blast_radius": 0.55,
+      "metric_noise": 0.3,
+      "red_herring": "old_anomaly",
+      "deploy_window": "flag_flip",
+      "schema_drift": "swap_units",
+      "seed": 1404361395,
+      "max_steps": 25
+    },
+    "regret": 0.9038274086996724,
+    "solve_rate": 0.4519137043498362,
+    "seen_count": 3
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0113_c2918e3b1d",
+      "topology": "deep_chain",
+      "fault_primary": "replica_lag",
+      "fault_secondary": "network_partition",
+      "inject_service": "inventory-service",
+      "latency_ms": 5000,
+      "blast_radius": 0.7,
+      "metric_noise": 0.1,
+      "red_herring": "unrelated_alert",
+      "deploy_window": "none",
+      "schema_drift": "endpoint_version_bump",
+      "seed": 1835004559,
+      "max_steps": 25
+    },
+    "regret": 0.28099586348853556,
+    "solve_rate": 0.14049793174426778,
+    "seen_count": 0
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0114_f5c5dc8f0c",
+      "topology": "deep_chain",
+      "fault_primary": "replica_lag",
+      "fault_secondary": null,
+      "inject_service": "checkout-service",
+      "latency_ms": 5000,
+      "blast_radius": 0.7,
+      "metric_noise": 0.1,
+      "red_herring": "unrelated_alert",
+      "deploy_window": "none",
+      "schema_drift": "none",
+      "seed": 443731791,
+      "max_steps": 25
+    },
+    "regret": 0.7944837147416175,
+    "solve_rate": 0.6027581426291913,
+    "seen_count": 2
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0115_c4cc51f8bf",
+      "topology": "mesh",
+      "fault_primary": "cache_stampede",
+      "fault_secondary": "deadlock",
+      "inject_service": "inventory-service",
+      "latency_ms": 3600,
+      "blast_radius": 0.45,
+      "metric_noise": 0.2,
+      "red_herring": "false_correlation",
+      "deploy_window": "config_change",
+      "schema_drift": "rename_metric",
+      "seed": 1992761298,
+      "max_steps": 25
+    },
+    "regret": 0.3701774846036209,
+    "solve_rate": 0.18508874230181044,
+    "seen_count": 0
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0116_d4493c39aa",
+      "topology": "deep_chain",
+      "fault_primary": "gc_pause",
+      "fault_secondary": "cache_stampede",
+      "inject_service": "inventory-service",
+      "latency_ms": 5000,
+      "blast_radius": 0.7,
+      "metric_noise": 0.1,
+      "red_herring": "unrelated_alert",
+      "deploy_window": "none",
+      "schema_drift": "none",
+      "seed": 1463063285,
+      "max_steps": 25
+    },
+    "regret": 0.6414801539002224,
+    "solve_rate": 0.3207400769501112,
+    "seen_count": 2
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0117_a5015c4ddc",
+      "topology": "deep_chain",
+      "fault_primary": "disk_full",
+      "fault_secondary": "cert_expiry",
+      "inject_service": "inventory-service",
+      "latency_ms": 5000,
+      "blast_radius": 0.7,
+      "metric_noise": 0.1,
+      "red_herring": "unrelated_alert",
+      "deploy_window": "none",
+      "schema_drift": "none",
+      "seed": 1759025465,
+      "max_steps": 25
+    },
+    "regret": 0.5532865604736255,
+    "solve_rate": 0.2766432802368127,
+    "seen_count": 0
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0118_28bec13db6",
+      "topology": "deep_chain",
+      "fault_primary": "cpu_hog",
+      "fault_secondary": null,
+      "inject_service": "api-gateway",
+      "latency_ms": 5000,
+      "blast_radius": 0.7,
+      "metric_noise": 0.1,
+      "red_herring": "unrelated_alert",
+      "deploy_window": "none",
+      "schema_drift": "rotate_creds",
+      "seed": 427914389,
+      "max_steps": 25
+    },
+    "regret": 0.8375535192503198,
+    "solve_rate": 0.4187767596251599,
+    "seen_count": 3
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0119_ff1103a084",
+      "topology": "star",
+      "fault_primary": "cert_expiry",
+      "fault_secondary": null,
+      "inject_service": "redis-cache",
+      "latency_ms": 2100,
+      "blast_radius": 0.4,
+      "metric_noise": 0.25,
+      "red_herring": "stale_deploy_notice",
+      "deploy_window": "none",
+      "schema_drift": "field_type_change",
+      "seed": 787108671,
+      "max_steps": 25
+    },
+    "regret": 0.9038038311048938,
+    "solve_rate": 0.4519019155524469,
+    "seen_count": 0
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0120_2f80815381",
+      "topology": "deep_chain",
+      "fault_primary": "http_503_loop",
+      "fault_secondary": "disk_full",
+      "inject_service": "api-gateway",
+      "latency_ms": 5000,
+      "blast_radius": 0.7,
+      "metric_noise": 0.1,
+      "red_herring": "unrelated_alert",
+      "deploy_window": "none",
+      "schema_drift": "rotate_creds",
+      "seed": 1645375670,
+      "max_steps": 25
+    },
+    "regret": 0.2764088816170237,
+    "solve_rate": 0.13820444080851185,
+    "seen_count": 1
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0121_2a9ecab580",
+      "topology": "deep_chain",
+      "fault_primary": "gc_pause",
+      "fault_secondary": "disk_full",
+      "inject_service": "inventory-service",
+      "latency_ms": 5000,
+      "blast_radius": 0.7,
+      "metric_noise": 0.1,
+      "red_herring": "unrelated_alert",
+      "deploy_window": "none",
+      "schema_drift": "none",
+      "seed": 1598077997,
+      "max_steps": 25
+    },
+    "regret": 0.6145195122040685,
+    "solve_rate": 0.30725975610203426,
+    "seen_count": 1
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0122_01627037a0",
+      "topology": "bipartite",
+      "fault_primary": "replica_lag",
+      "fault_secondary": "network_partition",
+      "inject_service": "user-service",
+      "latency_ms": 3100,
+      "blast_radius": 0.55,
+      "metric_noise": 0.3,
+      "red_herring": "old_anomaly",
+      "deploy_window": "flag_flip",
+      "schema_drift": "swap_units",
+      "seed": 237041118,
+      "max_steps": 25
+    },
+    "regret": 0.46715212599315303,
+    "solve_rate": 0.23357606299657652,
+    "seen_count": 1
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0123_52c4fccc35",
+      "topology": "simple_fanout",
+      "fault_primary": "http_503_loop",
+      "fault_secondary": null,
+      "inject_service": "payment-service",
+      "latency_ms": 4200,
+      "blast_radius": 0.35,
+      "metric_noise": 0.1,
+      "red_herring": "stale_deploy_notice",
+      "deploy_window": "recent_deploy",
+      "schema_drift": "none",
+      "seed": 648177642,
+      "max_steps": 25
+    },
+    "regret": 0.7261966283685717,
+    "solve_rate": 0.6369016858157142,
+    "seen_count": 1
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0124_38ed0bd95d",
+      "topology": "star",
+      "fault_primary": "replica_lag",
+      "fault_secondary": null,
+      "inject_service": "payment-service",
+      "latency_ms": 2100,
+      "blast_radius": 0.4,
+      "metric_noise": 0.25,
+      "red_herring": "stale_deploy_notice",
+      "deploy_window": "none",
+      "schema_drift": "field_type_change",
+      "seed": 1569926174,
+      "max_steps": 25
+    },
+    "regret": 0.8908409302566185,
+    "solve_rate": 0.44542046512830924,
+    "seen_count": 5
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0125_8f82e1506a",
+      "topology": "deep_chain",
+      "fault_primary": "dns_misconfig",
+      "fault_secondary": "cache_stampede",
+      "inject_service": "payment-service",
+      "latency_ms": 5000,
+      "blast_radius": 0.7,
+      "metric_noise": 0.1,
+      "red_herring": "unrelated_alert",
+      "deploy_window": "none",
+      "schema_drift": "none",
+      "seed": 748181312,
+      "max_steps": 25
+    },
+    "regret": 0.6846220645734947,
+    "solve_rate": 0.34231103228674736,
+    "seen_count": 0
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0126_5dab6a18e0",
+      "topology": "diamond",
+      "fault_primary": "http_503_loop",
+      "fault_secondary": "clock_skew",
+      "inject_service": "checkout-service",
+      "latency_ms": 3900,
+      "blast_radius": 0.8,
+      "metric_noise": 0.35,
+      "red_herring": "flapping_canary",
+      "deploy_window": "recent_deploy",
+      "schema_drift": "field_type_change",
+      "seed": 1698382961,
+      "max_steps": 25
+    },
+    "regret": 0.3746233188918444,
+    "solve_rate": 0.18731165944592218,
+    "seen_count": 2
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0127_053731014c",
+      "topology": "deep_chain",
+      "fault_primary": "network_partition",
+      "fault_secondary": null,
+      "inject_service": "checkout-service",
+      "latency_ms": 5000,
+      "blast_radius": 0.7,
+      "metric_noise": 0.1,
+      "red_herring": "unrelated_alert",
+      "deploy_window": "none",
+      "schema_drift": "rotate_creds",
+      "seed": 125254563,
+      "max_steps": 25
+    },
+    "regret": 0.955266888374157,
+    "solve_rate": 0.4776334441870785,
+    "seen_count": 1
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0128_cfbb543d19",
+      "topology": "deep_chain",
+      "fault_primary": "cert_expiry",
+      "fault_secondary": "cpu_hog",
+      "inject_service": "checkout-service",
+      "latency_ms": 5000,
+      "blast_radius": 0.7,
+      "metric_noise": 0.1,
+      "red_herring": "unrelated_alert",
+      "deploy_window": "none",
+      "schema_drift": "endpoint_version_bump",
+      "seed": 1006562563,
+      "max_steps": 25
+    },
+    "regret": 0.5683061787213005,
+    "solve_rate": 0.28415308936065026,
+    "seen_count": 1
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0129_f461709b69",
+      "topology": "star",
+      "fault_primary": "replica_lag",
+      "fault_secondary": null,
+      "inject_service": "payment-service",
+      "latency_ms": 2100,
+      "blast_radius": 0.4,
+      "metric_noise": 0.25,
+      "red_herring": "stale_deploy_notice",
+      "deploy_window": "none",
+      "schema_drift": "rotate_creds",
+      "seed": 451293902,
+      "max_steps": 25
+    },
+    "regret": 0.9316889889344124,
+    "solve_rate": 0.4658444944672062,
+    "seen_count": 3
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0130_c8da6f1375",
+      "topology": "deep_chain",
+      "fault_primary": "cache_stampede",
+      "fault_secondary": "cache_stampede",
+      "inject_service": "checkout-service",
+      "latency_ms": 5000,
+      "blast_radius": 0.7,
+      "metric_noise": 0.1,
+      "red_herring": "unrelated_alert",
+      "deploy_window": "none",
+      "schema_drift": "none",
+      "seed": 543311535,
+      "max_steps": 25
+    },
+    "regret": 0.6671095540633845,
+    "solve_rate": 0.33355477703169223,
+    "seen_count": 1
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0131_6ba7a7b7f2",
+      "topology": "deep_chain",
+      "fault_primary": "cpu_hog",
+      "fault_secondary": "clock_skew",
+      "inject_service": "checkout-service",
+      "latency_ms": 5000,
+      "blast_radius": 0.7,
+      "metric_noise": 0.1,
+      "red_herring": "unrelated_alert",
+      "deploy_window": "none",
+      "schema_drift": "rotate_creds",
+      "seed": 1305403459,
+      "max_steps": 25
+    },
+    "regret": 0.48584653749320994,
+    "solve_rate": 0.24292326874660497,
+    "seen_count": 0
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0132_8229eb045a",
+      "topology": "bipartite",
+      "fault_primary": "cpu_hog",
+      "fault_secondary": "network_partition",
+      "inject_service": "user-service",
+      "latency_ms": 3100,
+      "blast_radius": 0.55,
+      "metric_noise": 0.3,
+      "red_herring": "old_anomaly",
+      "deploy_window": "flag_flip",
+      "schema_drift": "swap_units",
+      "seed": 1210133966,
+      "max_steps": 25
+    },
+    "regret": 0.3231487529583128,
+    "solve_rate": 0.1615743764791564,
+    "seen_count": 1
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0133_d9ae77b622",
+      "topology": "star",
+      "fault_primary": "replica_lag",
+      "fault_secondary": "cert_expiry",
+      "inject_service": "payment-service",
+      "latency_ms": 2100,
+      "blast_radius": 0.4,
+      "metric_noise": 0.25,
+      "red_herring": "stale_deploy_notice",
+      "deploy_window": "none",
+      "schema_drift": "field_type_change",
+      "seed": 1839034861,
+      "max_steps": 25
+    },
+    "regret": 0.5248682922921567,
+    "solve_rate": 0.26243414614607835,
+    "seen_count": 1
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0134_301844eb45",
+      "topology": "deep_chain",
+      "fault_primary": "clock_skew",
+      "fault_secondary": "dns_misconfig",
+      "inject_service": "checkout-service",
+      "latency_ms": 5000,
+      "blast_radius": 0.7,
+      "metric_noise": 0.1,
+      "red_herring": "unrelated_alert",
+      "deploy_window": "none",
+      "schema_drift": "new_required_field",
+      "seed": 1382704746,
+      "max_steps": 25
+    },
+    "regret": 0.480226618964968,
+    "solve_rate": 0.240113309482484,
+    "seen_count": 1
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0135_66da916196",
+      "topology": "diamond",
+      "fault_primary": "http_503_loop",
+      "fault_secondary": "clock_skew",
+      "inject_service": "redis-cache",
+      "latency_ms": 3900,
+      "blast_radius": 0.8,
+      "metric_noise": 0.35,
+      "red_herring": "flapping_canary",
+      "deploy_window": "recent_deploy",
+      "schema_drift": "endpoint_version_bump",
+      "seed": 679241955,
+      "max_steps": 25
+    },
+    "regret": 0.2991465432653333,
+    "solve_rate": 0.14957327163266665,
+    "seen_count": 1
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0136_4546b58c65",
+      "topology": "deep_chain",
+      "fault_primary": "deadlock",
+      "fault_secondary": "cert_expiry",
+      "inject_service": "checkout-service",
+      "latency_ms": 5000,
+      "blast_radius": 0.7,
+      "metric_noise": 0.1,
+      "red_herring": "unrelated_alert",
+      "deploy_window": "none",
+      "schema_drift": "swap_units",
+      "seed": 1241056101,
+      "max_steps": 25
+    },
+    "regret": 0.38262593214660856,
+    "solve_rate": 0.1913129660733043,
+    "seen_count": 1
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0137_404e32e1f8",
+      "topology": "deep_chain",
+      "fault_primary": "cert_expiry",
+      "fault_secondary": "cert_expiry",
+      "inject_service": "api-gateway",
+      "latency_ms": 5000,
+      "blast_radius": 0.7,
+      "metric_noise": 0.1,
+      "red_herring": "unrelated_alert",
+      "deploy_window": "none",
+      "schema_drift": "new_required_field",
+      "seed": 1335091588,
+      "max_steps": 25
+    },
+    "regret": 0.2998353996981775,
+    "solve_rate": 0.14991769984908876,
+    "seen_count": 2
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0138_ec87ec35c7",
+      "topology": "deep_chain",
+      "fault_primary": "deadlock",
+      "fault_secondary": "cpu_hog",
+      "inject_service": "postgres-primary",
+      "latency_ms": 5000,
+      "blast_radius": 0.7,
+      "metric_noise": 0.1,
+      "red_herring": "unrelated_alert",
+      "deploy_window": "none",
+      "schema_drift": "field_type_change",
+      "seed": 582276622,
+      "max_steps": 25
+    },
+    "regret": 0.5294507688980612,
+    "solve_rate": 0.2647253844490306,
+    "seen_count": 0
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0139_d679a28736",
+      "topology": "deep_chain",
+      "fault_primary": "deadlock",
+      "fault_secondary": "disk_full",
+      "inject_service": "postgres-primary",
+      "latency_ms": 5000,
+      "blast_radius": 0.7,
+      "metric_noise": 0.1,
+      "red_herring": "unrelated_alert",
+      "deploy_window": "none",
+      "schema_drift": "new_required_field",
+      "seed": 224125984,
+      "max_steps": 25
+    },
+    "regret": 0.3198213410704849,
+    "solve_rate": 0.15991067053524244,
+    "seen_count": 2
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0140_14df7713f6",
+      "topology": "deep_chain",
+      "fault_primary": "cert_expiry",
+      "fault_secondary": null,
+      "inject_service": "postgres-primary",
+      "latency_ms": 5000,
+      "blast_radius": 0.7,
+      "metric_noise": 0.1,
+      "red_herring": "unrelated_alert",
+      "deploy_window": "none",
+      "schema_drift": "new_required_field",
+      "seed": 75274778,
+      "max_steps": 25
+    },
+    "regret": 0.873247126242077,
+    "solve_rate": 0.4366235631210385,
+    "seen_count": 0
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0141_3161b2b6b0",
+      "topology": "star",
+      "fault_primary": "replica_lag",
+      "fault_secondary": null,
+      "inject_service": "redis-cache",
+      "latency_ms": 2100,
+      "blast_radius": 0.4,
+      "metric_noise": 0.25,
+      "red_herring": "stale_deploy_notice",
+      "deploy_window": "none",
+      "schema_drift": "rename_metric",
+      "seed": 589233424,
+      "max_steps": 25
+    },
+    "regret": 0.9220604516194834,
+    "solve_rate": 0.4610302258097417,
+    "seen_count": 4
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0142_45da3b5dd7",
+      "topology": "bipartite",
+      "fault_primary": "cache_stampede",
+      "fault_secondary": "network_partition",
+      "inject_service": "user-service",
+      "latency_ms": 3100,
+      "blast_radius": 0.55,
+      "metric_noise": 0.3,
+      "red_herring": "old_anomaly",
+      "deploy_window": "flag_flip",
+      "schema_drift": "none",
+      "seed": 493233108,
+      "max_steps": 25
+    },
+    "regret": 0.5804717008712534,
+    "solve_rate": 0.2902358504356267,
+    "seen_count": 2
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0143_4c670dac31",
+      "topology": "deep_chain",
+      "fault_primary": "deadlock",
+      "fault_secondary": "disk_full",
+      "inject_service": "payment-service",
+      "latency_ms": 5000,
+      "blast_radius": 0.7,
+      "metric_noise": 0.1,
+      "red_herring": "unrelated_alert",
+      "deploy_window": "none",
+      "schema_drift": "swap_units",
+      "seed": 1509215034,
+      "max_steps": 25
+    },
+    "regret": 0.4315874325558281,
+    "solve_rate": 0.21579371627791405,
+    "seen_count": 1
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0144_bbdf748f39",
+      "topology": "deep_chain",
+      "fault_primary": "deadlock",
+      "fault_secondary": "deadlock",
+      "inject_service": "redis-cache",
+      "latency_ms": 5000,
+      "blast_radius": 0.7,
+      "metric_noise": 0.1,
+      "red_herring": "unrelated_alert",
+      "deploy_window": "none",
+      "schema_drift": "none",
+      "seed": 1540860822,
+      "max_steps": 25
+    },
+    "regret": 0.5212537256501876,
+    "solve_rate": 0.2606268628250938,
+    "seen_count": 1
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0145_480e1318f0",
+      "topology": "diamond",
+      "fault_primary": "http_503_loop",
+      "fault_secondary": "oom_kill",
+      "inject_service": "checkout-service",
+      "latency_ms": 3900,
+      "blast_radius": 0.8,
+      "metric_noise": 0.35,
+      "red_herring": "flapping_canary",
+      "deploy_window": "recent_deploy",
+      "schema_drift": "field_type_change",
+      "seed": 934011639,
+      "max_steps": 25
+    },
+    "regret": 0.2978564179158045,
+    "solve_rate": 0.14892820895790224,
+    "seen_count": 0
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0146_c2a08a4a10",
+      "topology": "star",
+      "fault_primary": "replica_lag",
+      "fault_secondary": null,
+      "inject_service": "inventory-service",
+      "latency_ms": 2100,
+      "blast_radius": 0.4,
+      "metric_noise": 0.25,
+      "red_herring": "stale_deploy_notice",
+      "deploy_window": "none",
+      "schema_drift": "field_type_change",
+      "seed": 1122376573,
+      "max_steps": 25
+    },
+    "regret": 0.9908094404980442,
+    "solve_rate": 0.4954047202490221,
+    "seen_count": 0
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0147_12f8ba9b51",
+      "topology": "diamond",
+      "fault_primary": "http_503_loop",
+      "fault_secondary": "network_partition",
+      "inject_service": "redis-cache",
+      "latency_ms": 3900,
+      "blast_radius": 0.8,
+      "metric_noise": 0.35,
+      "red_herring": "flapping_canary",
+      "deploy_window": "recent_deploy",
+      "schema_drift": "rotate_creds",
+      "seed": 262385831,
+      "max_steps": 25
+    },
+    "regret": 0.3198060866283279,
+    "solve_rate": 0.1599030433141639,
+    "seen_count": 0
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0148_d4e0531820",
+      "topology": "star",
+      "fault_primary": "replica_lag",
+      "fault_secondary": null,
+      "inject_service": "checkout-service",
+      "latency_ms": 2100,
+      "blast_radius": 0.4,
+      "metric_noise": 0.25,
+      "red_herring": "stale_deploy_notice",
+      "deploy_window": "none",
+      "schema_drift": "new_required_field",
+      "seed": 1496968566,
+      "max_steps": 25
+    },
+    "regret": 0.9204155882037692,
+    "solve_rate": 0.5397922058981154,
+    "seen_count": 1
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0149_509394a755",
+      "topology": "deep_chain",
+      "fault_primary": "disk_full",
+      "fault_secondary": null,
+      "inject_service": "checkout-service",
+      "latency_ms": 5000,
+      "blast_radius": 0.7,
+      "metric_noise": 0.1,
+      "red_herring": "unrelated_alert",
+      "deploy_window": "none",
+      "schema_drift": "rotate_creds",
+      "seed": 662477050,
+      "max_steps": 25
+    },
+    "regret": 0.9740896201506382,
+    "solve_rate": 0.4870448100753191,
+    "seen_count": 0
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0150_18f9b83d55",
+      "topology": "deep_chain",
+      "fault_primary": "cpu_hog",
+      "fault_secondary": "cert_expiry",
+      "inject_service": "payment-service",
+      "latency_ms": 5000,
+      "blast_radius": 0.7,
+      "metric_noise": 0.1,
+      "red_herring": "unrelated_alert",
+      "deploy_window": "none",
+      "schema_drift": "rotate_creds",
+      "seed": 478866978,
+      "max_steps": 25
+    },
+    "regret": 0.4349264670117411,
+    "solve_rate": 0.21746323350587055,
+    "seen_count": 1
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0151_bd4acae160",
+      "topology": "deep_chain",
+      "fault_primary": "cert_expiry",
+      "fault_secondary": "cert_expiry",
+      "inject_service": "api-gateway",
+      "latency_ms": 5000,
+      "blast_radius": 0.7,
+      "metric_noise": 0.1,
+      "red_herring": "unrelated_alert",
+      "deploy_window": "none",
+      "schema_drift": "rename_metric",
+      "seed": 1596295138,
+      "max_steps": 25
+    },
+    "regret": 0.3206950462842517,
+    "solve_rate": 0.1603475231421259,
+    "seen_count": 0
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0152_5da05188d2",
+      "topology": "deep_chain",
+      "fault_primary": "cert_expiry",
+      "fault_secondary": "cert_expiry",
+      "inject_service": "checkout-service",
+      "latency_ms": 5000,
+      "blast_radius": 0.7,
+      "metric_noise": 0.1,
+      "red_herring": "unrelated_alert",
+      "deploy_window": "none",
+      "schema_drift": "new_required_field",
+      "seed": 608150731,
+      "max_steps": 25
+    },
+    "regret": 0.5577132861075206,
+    "solve_rate": 0.2788566430537603,
+    "seen_count": 0
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0153_60c4e2fb59",
+      "topology": "deep_chain",
+      "fault_primary": "replica_lag",
+      "fault_secondary": "oom_kill",
+      "inject_service": "checkout-service",
+      "latency_ms": 5000,
+      "blast_radius": 0.7,
+      "metric_noise": 0.1,
+      "red_herring": "unrelated_alert",
+      "deploy_window": "none",
+      "schema_drift": "endpoint_version_bump",
+      "seed": 1788539291,
+      "max_steps": 25
+    },
+    "regret": 0.5072896143954279,
+    "solve_rate": 0.25364480719771393,
+    "seen_count": 0
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0154_1877418d50",
+      "topology": "deep_chain",
+      "fault_primary": "deadlock",
+      "fault_secondary": "disk_full",
+      "inject_service": "payment-service",
+      "latency_ms": 5000,
+      "blast_radius": 0.7,
+      "metric_noise": 0.1,
+      "red_herring": "unrelated_alert",
+      "deploy_window": "none",
+      "schema_drift": "endpoint_version_bump",
+      "seed": 1117682785,
+      "max_steps": 25
+    },
+    "regret": 0.3792836802613837,
+    "solve_rate": 0.18964184013069188,
+    "seen_count": 0
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0155_72e2b733f3",
+      "topology": "deep_chain",
+      "fault_primary": "deadlock",
+      "fault_secondary": "oom_kill",
+      "inject_service": "postgres-primary",
+      "latency_ms": 5000,
+      "blast_radius": 0.7,
+      "metric_noise": 0.1,
+      "red_herring": "unrelated_alert",
+      "deploy_window": "none",
+      "schema_drift": "none",
+      "seed": 1086234189,
+      "max_steps": 25
+    },
+    "regret": 0.7700703976854588,
+    "solve_rate": 0.3850351988427294,
+    "seen_count": 1
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0156_80670c38b5",
+      "topology": "deep_chain",
+      "fault_primary": "dns_misconfig",
+      "fault_secondary": "network_partition",
+      "inject_service": "inventory-service",
+      "latency_ms": 5000,
+      "blast_radius": 0.7,
+      "metric_noise": 0.1,
+      "red_herring": "unrelated_alert",
+      "deploy_window": "none",
+      "schema_drift": "none",
+      "seed": 97742707,
+      "max_steps": 25
+    },
+    "regret": 0.5562422291601739,
+    "solve_rate": 0.2781211145800869,
+    "seen_count": 0
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0157_c3efee767a",
+      "topology": "deep_chain",
+      "fault_primary": "replica_lag",
+      "fault_secondary": "cert_expiry",
+      "inject_service": "user-service",
+      "latency_ms": 5000,
+      "blast_radius": 0.7,
+      "metric_noise": 0.1,
+      "red_herring": "unrelated_alert",
+      "deploy_window": "none",
+      "schema_drift": "none",
+      "seed": 1894805635,
+      "max_steps": 25
+    },
+    "regret": 0.5894697287437707,
+    "solve_rate": 0.29473486437188534,
+    "seen_count": 0
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0158_e4d33f6bc5",
+      "topology": "bipartite",
+      "fault_primary": "cache_stampede",
+      "fault_secondary": "deadlock",
+      "inject_service": "redis-cache",
+      "latency_ms": 3100,
+      "blast_radius": 0.55,
+      "metric_noise": 0.3,
+      "red_herring": "old_anomaly",
+      "deploy_window": "flag_flip",
+      "schema_drift": "swap_units",
+      "seed": 357146628,
+      "max_steps": 25
+    },
+    "regret": 0.4278067830772334,
+    "solve_rate": 0.2139033915386167,
+    "seen_count": 1
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0159_330292c509",
+      "topology": "deep_chain",
+      "fault_primary": "deadlock",
+      "fault_secondary": "cache_stampede",
+      "inject_service": "postgres-primary",
+      "latency_ms": 5000,
+      "blast_radius": 0.7,
+      "metric_noise": 0.1,
+      "red_herring": "unrelated_alert",
+      "deploy_window": "none",
+      "schema_drift": "new_required_field",
+      "seed": 349593372,
+      "max_steps": 25
+    },
+    "regret": 0.4431164008922105,
+    "solve_rate": 0.22155820044610525,
+    "seen_count": 0
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0160_ef5dea01f2",
+      "topology": "deep_chain",
+      "fault_primary": "clock_skew",
+      "fault_secondary": "disk_full",
+      "inject_service": "redis-cache",
+      "latency_ms": 5000,
+      "blast_radius": 0.7,
+      "metric_noise": 0.1,
+      "red_herring": "unrelated_alert",
+      "deploy_window": "none",
+      "schema_drift": "none",
+      "seed": 964356659,
+      "max_steps": 25
+    },
+    "regret": 0.6065661723508141,
+    "solve_rate": 0.30328308617540706,
+    "seen_count": 0
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0161_833ca54c8a",
+      "topology": "star",
+      "fault_primary": "http_503_loop",
+      "fault_secondary": null,
+      "inject_service": "redis-cache",
+      "latency_ms": 2100,
+      "blast_radius": 0.4,
+      "metric_noise": 0.25,
+      "red_herring": "stale_deploy_notice",
+      "deploy_window": "none",
+      "schema_drift": "rename_metric",
+      "seed": 462913651,
+      "max_steps": 25
+    },
+    "regret": 0.8272339330452111,
+    "solve_rate": 0.41361696652260554,
+    "seen_count": 1
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0162_a670a72985",
+      "topology": "deep_chain",
+      "fault_primary": "deadlock",
+      "fault_secondary": "network_partition",
+      "inject_service": "api-gateway",
+      "latency_ms": 5000,
+      "blast_radius": 0.7,
+      "metric_noise": 0.1,
+      "red_herring": "unrelated_alert",
+      "deploy_window": "none",
+      "schema_drift": "none",
+      "seed": 1142239375,
+      "max_steps": 25
+    },
+    "regret": 0.7259756105400561,
+    "solve_rate": 0.36298780527002805,
+    "seen_count": 1
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0163_e50f3a2581",
+      "topology": "deep_chain",
+      "fault_primary": "deadlock",
+      "fault_secondary": null,
+      "inject_service": "api-gateway",
+      "latency_ms": 5000,
+      "blast_radius": 0.7,
+      "metric_noise": 0.1,
+      "red_herring": "unrelated_alert",
+      "deploy_window": "none",
+      "schema_drift": "new_required_field",
+      "seed": 1754563328,
+      "max_steps": 25
+    },
+    "regret": 0.8682802761274124,
+    "solve_rate": 0.4341401380637062,
+    "seen_count": 0
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0164_a2f80c213b",
+      "topology": "bipartite",
+      "fault_primary": "cache_stampede",
+      "fault_secondary": "http_503_loop",
+      "inject_service": "redis-cache",
+      "latency_ms": 3100,
+      "blast_radius": 0.55,
+      "metric_noise": 0.3,
+      "red_herring": "old_anomaly",
+      "deploy_window": "flag_flip",
+      "schema_drift": "swap_units",
+      "seed": 1434042451,
+      "max_steps": 25
+    },
+    "regret": 0.34465661022833305,
+    "solve_rate": 0.17232830511416652,
+    "seen_count": 0
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0165_b13c686c48",
+      "topology": "star",
+      "fault_primary": "replica_lag",
+      "fault_secondary": "cache_stampede",
+      "inject_service": "inventory-service",
+      "latency_ms": 2100,
+      "blast_radius": 0.4,
+      "metric_noise": 0.25,
+      "red_herring": "stale_deploy_notice",
+      "deploy_window": "none",
+      "schema_drift": "field_type_change",
+      "seed": 594819512,
+      "max_steps": 25
+    },
+    "regret": 0.392878374341319,
+    "solve_rate": 0.1964391871706595,
+    "seen_count": 0
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0166_0c77464894",
+      "topology": "bipartite",
+      "fault_primary": "cache_stampede",
+      "fault_secondary": "oom_kill",
+      "inject_service": "user-service",
+      "latency_ms": 3100,
+      "blast_radius": 0.55,
+      "metric_noise": 0.3,
+      "red_herring": "old_anomaly",
+      "deploy_window": "flag_flip",
+      "schema_drift": "none",
+      "seed": 1568943495,
+      "max_steps": 25
+    },
+    "regret": 0.5406804561093443,
+    "solve_rate": 0.27034022805467217,
+    "seen_count": 0
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0167_1f699bdc02",
+      "topology": "deep_chain",
+      "fault_primary": "deadlock",
+      "fault_secondary": "cache_stampede",
+      "inject_service": "redis-cache",
+      "latency_ms": 5000,
+      "blast_radius": 0.7,
+      "metric_noise": 0.1,
+      "red_herring": "unrelated_alert",
+      "deploy_window": "none",
+      "schema_drift": "rename_metric",
+      "seed": 944495012,
+      "max_steps": 25
+    },
+    "regret": 0.40498317849263477,
+    "solve_rate": 0.20249158924631738,
+    "seen_count": 0
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0168_9a9f0d03e2",
+      "topology": "mesh",
+      "fault_primary": "dns_misconfig",
+      "fault_secondary": "deadlock",
+      "inject_service": "checkout-service",
+      "latency_ms": 3600,
+      "blast_radius": 0.45,
+      "metric_noise": 0.2,
+      "red_herring": "false_correlation",
+      "deploy_window": "config_change",
+      "schema_drift": "rename_metric",
+      "seed": 883578163,
+      "max_steps": 25
+    },
+    "regret": 0.5777662809485768,
+    "solve_rate": 0.2888831404742884,
+    "seen_count": 2
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0169_ebbd5b641e",
+      "topology": "bipartite",
+      "fault_primary": "clock_skew",
+      "fault_secondary": null,
+      "inject_service": "redis-cache",
+      "latency_ms": 3100,
+      "blast_radius": 0.55,
+      "metric_noise": 0.3,
+      "red_herring": "old_anomaly",
+      "deploy_window": "flag_flip",
+      "schema_drift": "new_required_field",
+      "seed": 1108704866,
+      "max_steps": 25
+    },
+    "regret": 0.9032166509010504,
+    "solve_rate": 0.4516083254505252,
+    "seen_count": 1
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0170_7d5cd0cef1",
+      "topology": "deep_chain",
+      "fault_primary": "dns_misconfig",
+      "fault_secondary": "clock_skew",
+      "inject_service": "inventory-service",
+      "latency_ms": 5000,
+      "blast_radius": 0.7,
+      "metric_noise": 0.1,
+      "red_herring": "unrelated_alert",
+      "deploy_window": "none",
+      "schema_drift": "none",
+      "seed": 1098990871,
+      "max_steps": 25
+    },
+    "regret": 0.5775469280165366,
+    "solve_rate": 0.2887734640082683,
+    "seen_count": 2
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0171_55ba6fafcd",
+      "topology": "deep_chain",
+      "fault_primary": "clock_skew",
+      "fault_secondary": "oom_kill",
+      "inject_service": "checkout-service",
+      "latency_ms": 5000,
+      "blast_radius": 0.7,
+      "metric_noise": 0.1,
+      "red_herring": "unrelated_alert",
+      "deploy_window": "none",
+      "schema_drift": "new_required_field",
+      "seed": 1006069600,
+      "max_steps": 25
+    },
+    "regret": 0.3054951724631023,
+    "solve_rate": 0.15274758623155113,
+    "seen_count": 1
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0172_c0f29d37ec",
+      "topology": "star",
+      "fault_primary": "replica_lag",
+      "fault_secondary": "gc_pause",
+      "inject_service": "inventory-service",
+      "latency_ms": 2100,
+      "blast_radius": 0.4,
+      "metric_noise": 0.25,
+      "red_herring": "stale_deploy_notice",
+      "deploy_window": "none",
+      "schema_drift": "rotate_creds",
+      "seed": 1588311073,
+      "max_steps": 25
+    },
+    "regret": 0.3720916599253613,
+    "solve_rate": 0.18604582996268065,
+    "seen_count": 0
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0173_fc325576d4",
+      "topology": "deep_chain",
+      "fault_primary": "dns_misconfig",
+      "fault_secondary": "cache_stampede",
+      "inject_service": "inventory-service",
+      "latency_ms": 5000,
+      "blast_radius": 0.7,
+      "metric_noise": 0.1,
+      "red_herring": "unrelated_alert",
+      "deploy_window": "none",
+      "schema_drift": "rotate_creds",
+      "seed": 1866517910,
+      "max_steps": 25
+    },
+    "regret": 0.38232966502242904,
+    "solve_rate": 0.19116483251121455,
+    "seen_count": 0
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0174_02c6c45a1f",
+      "topology": "star",
+      "fault_primary": "deadlock",
+      "fault_secondary": null,
+      "inject_service": "payment-service",
+      "latency_ms": 2100,
+      "blast_radius": 0.4,
+      "metric_noise": 0.25,
+      "red_herring": "stale_deploy_notice",
+      "deploy_window": "none",
+      "schema_drift": "rotate_creds",
+      "seed": 506525417,
+      "max_steps": 25
+    },
+    "regret": 0.8582435741648902,
+    "solve_rate": 0.5708782129175549,
+    "seen_count": 0
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0175_aa7225b440",
+      "topology": "deep_chain",
+      "fault_primary": "oom_kill",
+      "fault_secondary": null,
+      "inject_service": "inventory-service",
+      "latency_ms": 5000,
+      "blast_radius": 0.7,
+      "metric_noise": 0.1,
+      "red_herring": "unrelated_alert",
+      "deploy_window": "none",
+      "schema_drift": "rotate_creds",
+      "seed": 208044295,
+      "max_steps": 25
+    },
+    "regret": 0.9571601635231071,
+    "solve_rate": 0.5214199182384465,
+    "seen_count": 0
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0176_ee15ae2c90",
+      "topology": "deep_chain",
+      "fault_primary": "replica_lag",
+      "fault_secondary": "clock_skew",
+      "inject_service": "inventory-service",
+      "latency_ms": 5000,
+      "blast_radius": 0.7,
+      "metric_noise": 0.1,
+      "red_herring": "unrelated_alert",
+      "deploy_window": "none",
+      "schema_drift": "swap_units",
+      "seed": 620303846,
+      "max_steps": 25
+    },
+    "regret": 0.5464016840601766,
+    "solve_rate": 0.2732008420300883,
+    "seen_count": 0
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0177_392360aa85",
+      "topology": "deep_chain",
+      "fault_primary": "cpu_hog",
+      "fault_secondary": "gc_pause",
+      "inject_service": "inventory-service",
+      "latency_ms": 5000,
+      "blast_radius": 0.7,
+      "metric_noise": 0.1,
+      "red_herring": "unrelated_alert",
+      "deploy_window": "none",
+      "schema_drift": "none",
+      "seed": 1392102492,
+      "max_steps": 25
+    },
+    "regret": 0.5213685622507184,
+    "solve_rate": 0.2606842811253592,
+    "seen_count": 0
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0178_675f3b7969",
+      "topology": "deep_chain",
+      "fault_primary": "oom_kill",
+      "fault_secondary": null,
+      "inject_service": "postgres-primary",
+      "latency_ms": 5000,
+      "blast_radius": 0.7,
+      "metric_noise": 0.1,
+      "red_herring": "unrelated_alert",
+      "deploy_window": "none",
+      "schema_drift": "rotate_creds",
+      "seed": 1403633762,
+      "max_steps": 25
+    },
+    "regret": 0.9964231291294895,
+    "solve_rate": 0.49821156456474475,
+    "seen_count": 1
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0179_6d6aa164d7",
+      "topology": "mesh",
+      "fault_primary": "dns_misconfig",
+      "fault_secondary": null,
+      "inject_service": "checkout-service",
+      "latency_ms": 3600,
+      "blast_radius": 0.45,
+      "metric_noise": 0.2,
+      "red_herring": "false_correlation",
+      "deploy_window": "config_change",
+      "schema_drift": "rename_metric",
+      "seed": 464298511,
+      "max_steps": 25
+    },
+    "regret": 0.8963769337031617,
+    "solve_rate": 0.5518115331484191,
+    "seen_count": 1
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0180_56443af9d8",
+      "topology": "deep_chain",
+      "fault_primary": "cpu_hog",
+      "fault_secondary": null,
+      "inject_service": "payment-service",
+      "latency_ms": 5000,
+      "blast_radius": 0.7,
+      "metric_noise": 0.1,
+      "red_herring": "unrelated_alert",
+      "deploy_window": "none",
+      "schema_drift": "rotate_creds",
+      "seed": 1830062906,
+      "max_steps": 25
+    },
+    "regret": 0.9919299152710195,
+    "solve_rate": 0.49596495763550974,
+    "seen_count": 0
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0181_772010e079",
+      "topology": "deep_chain",
+      "fault_primary": "replica_lag",
+      "fault_secondary": null,
+      "inject_service": "checkout-service",
+      "latency_ms": 5000,
+      "blast_radius": 0.7,
+      "metric_noise": 0.1,
+      "red_herring": "unrelated_alert",
+      "deploy_window": "none",
+      "schema_drift": "rename_metric",
+      "seed": 1728479255,
+      "max_steps": 25
+    },
+    "regret": 0.864042287653516,
+    "solve_rate": 0.432021143826758,
+    "seen_count": 0
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0182_41772cd926",
+      "topology": "star",
+      "fault_primary": "replica_lag",
+      "fault_secondary": "dns_misconfig",
+      "inject_service": "payment-service",
+      "latency_ms": 2100,
+      "blast_radius": 0.4,
+      "metric_noise": 0.25,
+      "red_herring": "stale_deploy_notice",
+      "deploy_window": "none",
+      "schema_drift": "field_type_change",
+      "seed": 1849300569,
+      "max_steps": 25
+    },
+    "regret": 0.3803687393847477,
+    "solve_rate": 0.19018436969237387,
+    "seen_count": 0
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0183_468a9382d9",
+      "topology": "deep_chain",
+      "fault_primary": "deadlock",
+      "fault_secondary": "disk_full",
+      "inject_service": "user-service",
+      "latency_ms": 5000,
+      "blast_radius": 0.7,
+      "metric_noise": 0.1,
+      "red_herring": "unrelated_alert",
+      "deploy_window": "none",
+      "schema_drift": "endpoint_version_bump",
+      "seed": 1167555479,
+      "max_steps": 25
+    },
+    "regret": 0.33039751451976906,
+    "solve_rate": 0.16519875725988453,
+    "seen_count": 0
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0184_eee70fd18c",
+      "topology": "star",
+      "fault_primary": "replica_lag",
+      "fault_secondary": "cert_expiry",
+      "inject_service": "inventory-service",
+      "latency_ms": 2100,
+      "blast_radius": 0.4,
+      "metric_noise": 0.25,
+      "red_herring": "stale_deploy_notice",
+      "deploy_window": "none",
+      "schema_drift": "field_type_change",
+      "seed": 958753323,
+      "max_steps": 25
+    },
+    "regret": 0.32484678852833404,
+    "solve_rate": 0.16242339426416702,
+    "seen_count": 0
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0185_046785641e",
+      "topology": "bipartite",
+      "fault_primary": "cache_stampede",
+      "fault_secondary": "cpu_hog",
+      "inject_service": "redis-cache",
+      "latency_ms": 3100,
+      "blast_radius": 0.55,
+      "metric_noise": 0.3,
+      "red_herring": "old_anomaly",
+      "deploy_window": "flag_flip",
+      "schema_drift": "swap_units",
+      "seed": 215092694,
+      "max_steps": 25
+    },
+    "regret": 0.2502419397518738,
+    "solve_rate": 0.1251209698759369,
+    "seen_count": 0
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0186_6c98c960ed",
+      "topology": "deep_chain",
+      "fault_primary": "oom_kill",
+      "fault_secondary": null,
+      "inject_service": "postgres-primary",
+      "latency_ms": 5000,
+      "blast_radius": 0.7,
+      "metric_noise": 0.1,
+      "red_herring": "unrelated_alert",
+      "deploy_window": "none",
+      "schema_drift": "field_type_change",
+      "seed": 286987040,
+      "max_steps": 25
+    },
+    "regret": 0.9384331337625363,
+    "solve_rate": 0.46921656688126817,
+    "seen_count": 1
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0187_bcaa8cf192",
+      "topology": "deep_chain",
+      "fault_primary": "replica_lag",
+      "fault_secondary": "cert_expiry",
+      "inject_service": "checkout-service",
+      "latency_ms": 5000,
+      "blast_radius": 0.7,
+      "metric_noise": 0.1,
+      "red_herring": "unrelated_alert",
+      "deploy_window": "none",
+      "schema_drift": "endpoint_version_bump",
+      "seed": 931829354,
+      "max_steps": 25
+    },
+    "regret": 0.318694218057207,
+    "solve_rate": 0.1593471090286035,
+    "seen_count": 0
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0188_02bdafaf1e",
+      "topology": "deep_chain",
+      "fault_primary": "network_partition",
+      "fault_secondary": "disk_full",
+      "inject_service": "checkout-service",
+      "latency_ms": 5000,
+      "blast_radius": 0.7,
+      "metric_noise": 0.1,
+      "red_herring": "unrelated_alert",
+      "deploy_window": "none",
+      "schema_drift": "rotate_creds",
+      "seed": 518995818,
+      "max_steps": 25
+    },
+    "regret": 0.5553026893846145,
+    "solve_rate": 0.27765134469230723,
+    "seen_count": 0
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0189_9da9e8c6fb",
+      "topology": "deep_chain",
+      "fault_primary": "cert_expiry",
+      "fault_secondary": "cert_expiry",
+      "inject_service": "payment-service",
+      "latency_ms": 5000,
+      "blast_radius": 0.7,
+      "metric_noise": 0.1,
+      "red_herring": "unrelated_alert",
+      "deploy_window": "none",
+      "schema_drift": "rotate_creds",
+      "seed": 1802987441,
+      "max_steps": 25
+    },
+    "regret": 0.532997694736447,
+    "solve_rate": 0.2664988473682235,
+    "seen_count": 0
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0190_48820435f9",
+      "topology": "deep_chain",
+      "fault_primary": "cert_expiry",
+      "fault_secondary": "cert_expiry",
+      "inject_service": "checkout-service",
+      "latency_ms": 5000,
+      "blast_radius": 0.7,
+      "metric_noise": 0.1,
+      "red_herring": "unrelated_alert",
+      "deploy_window": "none",
+      "schema_drift": "field_type_change",
+      "seed": 1837535524,
+      "max_steps": 25
+    },
+    "regret": 0.49830729362600445,
+    "solve_rate": 0.24915364681300226,
+    "seen_count": 0
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0191_412ace2f63",
+      "topology": "mesh",
+      "fault_primary": "dns_misconfig",
+      "fault_secondary": null,
+      "inject_service": "user-service",
+      "latency_ms": 3600,
+      "blast_radius": 0.45,
+      "metric_noise": 0.2,
+      "red_herring": "false_correlation",
+      "deploy_window": "config_change",
+      "schema_drift": "rename_metric",
+      "seed": 1489702262,
+      "max_steps": 25
+    },
+    "regret": 0.9723801050132286,
+    "solve_rate": 0.4861900525066143,
+    "seen_count": 0
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0192_49b93a5c23",
+      "topology": "diamond",
+      "fault_primary": "http_503_loop",
+      "fault_secondary": "deadlock",
+      "inject_service": "checkout-service",
+      "latency_ms": 3900,
+      "blast_radius": 0.8,
+      "metric_noise": 0.35,
+      "red_herring": "flapping_canary",
+      "deploy_window": "recent_deploy",
+      "schema_drift": "field_type_change",
+      "seed": 1983191182,
+      "max_steps": 25
+    },
+    "regret": 0.2090419357751474,
+    "solve_rate": 0.1045209678875737,
+    "seen_count": 1
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0193_2244c6d8e2",
+      "topology": "deep_chain",
+      "fault_primary": "gc_pause",
+      "fault_secondary": "oom_kill",
+      "inject_service": "checkout-service",
+      "latency_ms": 5000,
+      "blast_radius": 0.7,
+      "metric_noise": 0.1,
+      "red_herring": "unrelated_alert",
+      "deploy_window": "none",
+      "schema_drift": "new_required_field",
+      "seed": 1267516844,
+      "max_steps": 25
+    },
+    "regret": 0.5199173254516632,
+    "solve_rate": 0.2599586627258316,
+    "seen_count": 0
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0194_2adb067b8f",
+      "topology": "bipartite",
+      "fault_primary": "cache_stampede",
+      "fault_secondary": "disk_full",
+      "inject_service": "user-service",
+      "latency_ms": 3100,
+      "blast_radius": 0.55,
+      "metric_noise": 0.3,
+      "red_herring": "old_anomaly",
+      "deploy_window": "flag_flip",
+      "schema_drift": "swap_units",
+      "seed": 1500375896,
+      "max_steps": 25
+    },
+    "regret": 0.537591316989916,
+    "solve_rate": 0.268795658494958,
+    "seen_count": 0
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0195_6ad30444d4",
+      "topology": "bipartite",
+      "fault_primary": "cpu_hog",
+      "fault_secondary": "network_partition",
+      "inject_service": "checkout-service",
+      "latency_ms": 3100,
+      "blast_radius": 0.55,
+      "metric_noise": 0.3,
+      "red_herring": "old_anomaly",
+      "deploy_window": "flag_flip",
+      "schema_drift": "swap_units",
+      "seed": 95517738,
+      "max_steps": 25
+    },
+    "regret": 0.4414311622144014,
+    "solve_rate": 0.2207155811072007,
+    "seen_count": 0
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0196_384860489d",
+      "topology": "deep_chain",
+      "fault_primary": "cert_expiry",
+      "fault_secondary": null,
+      "inject_service": "checkout-service",
+      "latency_ms": 5000,
+      "blast_radius": 0.7,
+      "metric_noise": 0.1,
+      "red_herring": "unrelated_alert",
+      "deploy_window": "none",
+      "schema_drift": "field_type_change",
+      "seed": 464780883,
+      "max_steps": 25
+    },
+    "regret": 0.993145886387911,
+    "solve_rate": 0.4965729431939555,
+    "seen_count": 0
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0197_88a931f292",
+      "topology": "deep_chain",
+      "fault_primary": "deadlock",
+      "fault_secondary": null,
+      "inject_service": "postgres-primary",
+      "latency_ms": 5000,
+      "blast_radius": 0.7,
+      "metric_noise": 0.1,
+      "red_herring": "unrelated_alert",
+      "deploy_window": "none",
+      "schema_drift": "field_type_change",
+      "seed": 1471195678,
+      "max_steps": 25
+    },
+    "regret": 0.9252859524548858,
+    "solve_rate": 0.4626429762274429,
+    "seen_count": 0
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0198_b79cc2f9d2",
+      "topology": "deep_chain",
+      "fault_primary": "cert_expiry",
+      "fault_secondary": null,
+      "inject_service": "postgres-primary",
+      "latency_ms": 5000,
+      "blast_radius": 0.7,
+      "metric_noise": 0.1,
+      "red_herring": "unrelated_alert",
+      "deploy_window": "none",
+      "schema_drift": "none",
+      "seed": 1310116562,
+      "max_steps": 25
+    },
+    "regret": 0.8721922019743538,
+    "solve_rate": 0.5639038990128231,
+    "seen_count": 0
+  },
+  {
+    "spec": {
+      "task_id": "evolved_0199_6b9c73c7b4",
+      "topology": "deep_chain",
+      "fault_primary": "cpu_hog",
+      "fault_secondary": "cert_expiry",
+      "inject_service": "postgres-primary",
+      "latency_ms": 5000,
+      "blast_radius": 0.7,
+      "metric_noise": 0.1,
+      "red_herring": "unrelated_alert",
+      "deploy_window": "none",
+      "schema_drift": "swap_units",
+      "seed": 1389994754,
+      "max_steps": 25
+    },
+    "regret": 0.5706768583586888,
+    "solve_rate": 0.2853384291793444,
+    "seen_count": 0
+  }
+]

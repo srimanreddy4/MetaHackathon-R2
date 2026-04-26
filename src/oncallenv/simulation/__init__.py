@@ -1,0 +1,2 @@
+"""Pure-Python incident simulator."""
+

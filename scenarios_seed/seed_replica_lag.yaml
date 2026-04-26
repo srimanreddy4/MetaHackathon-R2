@@ -1,0 +1,14 @@
+task_id: seed_replica_lag
+topology: star
+fault_primary: replica_lag
+fault_secondary:
+inject_service: postgres-primary
+latency_ms: 2100
+blast_radius: 0.4
+metric_noise: 0.25
+red_herring: stale_deploy_notice
+deploy_window: none
+schema_drift: field_type_change
+seed: 23
+max_steps: 25
+

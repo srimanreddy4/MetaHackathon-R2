@@ -1,0 +1,14 @@
+task_id: seed_cache_stampede
+topology: bipartite
+fault_primary: cache_stampede
+fault_secondary:
+inject_service: redis-cache
+latency_ms: 3100
+blast_radius: 0.55
+metric_noise: 0.3
+red_herring: old_anomaly
+deploy_window: flag_flip
+schema_drift: swap_units
+seed: 19
+max_steps: 25
+
