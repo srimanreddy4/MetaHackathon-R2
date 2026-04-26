@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import tarfile
 from pathlib import Path
 
 import torch
@@ -32,6 +33,46 @@ def latest_checkpoint(run_dir: Path) -> Path:
     if not checkpoints:
         raise FileNotFoundError(f"No checkpoint-* directories found under {run_dir}")
     return checkpoints[-1]
+
+
+def maybe_extract_artifact(archive_path: Path, extract_dir: Path) -> Path | None:
+    if not archive_path.exists():
+        return None
+    target_run_dir = extract_dir / "training_results" / "unsloth_grpo_qwen3b_easy"
+    if (target_run_dir / "checkpoint-200" / "adapter_model.safetensors").exists():
+        return target_run_dir
+    extract_dir.mkdir(parents=True, exist_ok=True)
+    with tarfile.open(archive_path, "r:gz") as archive:
+        archive.extractall(extract_dir)
+    return target_run_dir if target_run_dir.exists() else None
+
+
+def resolve_run_dir(run_dir: Path, artifact_archive: Path | None, extract_dir: Path) -> Path:
+    if (run_dir / "checkpoint-200" / "adapter_model.safetensors").exists() or any(run_dir.glob("checkpoint-*")):
+        return run_dir
+
+    candidate_archives: list[Path] = []
+    if artifact_archive:
+        candidate_archives.append(artifact_archive)
+    candidate_archives.extend(
+        [
+            Path("artifacts/easy_grpo_qwen3b_artifacts.tar.gz"),
+            Path("artifacts/models/easy_grpo_qwen3b_artifacts.tar.gz"),
+            Path("/kaggle/working/easy_grpo_qwen3b_artifacts.tar.gz"),
+            Path("/kaggle/working/MetaHackathon-R2/artifacts/models/easy_grpo_qwen3b_artifacts.tar.gz"),
+        ]
+    )
+
+    for archive in candidate_archives:
+        extracted = maybe_extract_artifact(archive, extract_dir)
+        if extracted and any(extracted.glob("checkpoint-*")):
+            return extracted
+
+    searched = ", ".join(str(path) for path in candidate_archives)
+    raise FileNotFoundError(
+        f"Could not find checkpoints under {run_dir} and could not extract an artifact archive. "
+        f"Searched archives: {searched}"
+    )
 
 
 def load_model(model_name: str, adapter_path: Path, max_seq_length: int):
@@ -103,6 +144,8 @@ def main() -> None:
     parser.add_argument("--model-name", default="unsloth/Qwen2.5-3B-Instruct-bnb-4bit")
     parser.add_argument("--run-dir", type=Path, default=Path("training_results/unsloth_grpo_qwen3b_easy"))
     parser.add_argument("--checkpoint", type=Path, default=None)
+    parser.add_argument("--artifact-archive", type=Path, default=None)
+    parser.add_argument("--extract-dir", type=Path, default=Path("artifacts/models/easy_grpo_qwen3b_extracted"))
     parser.add_argument("--sample-url", default=DEFAULT_SAMPLE_URL)
     parser.add_argument("--data-path", type=Path, default=Path("external_data/rcaeval/simple_data.csv"))
     parser.add_argument("--out-dir", type=Path, default=Path("eval_results/rcaeval_qwen_easy"))
@@ -116,7 +159,8 @@ def main() -> None:
     parser.add_argument("--max-new-tokens", type=int, default=160)
     args = parser.parse_args()
 
-    checkpoint = args.checkpoint or latest_checkpoint(args.run_dir)
+    run_dir = resolve_run_dir(args.run_dir, args.artifact_archive, args.extract_dir)
+    checkpoint = args.checkpoint or latest_checkpoint(run_dir)
     download_file(args.sample_url, args.data_path)
     times, columns = load_metric_csv(args.data_path)
     if args.method == "baro":
@@ -144,6 +188,7 @@ def main() -> None:
         "mode": "qwen_adapter_generation",
         "model_name": args.model_name,
         "load_backend": load_backend,
+        "run_dir": str(run_dir),
         "checkpoint": str(checkpoint),
         "source": {
             "benchmark": "RCAEval public quickstart sample",
