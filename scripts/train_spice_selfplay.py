@@ -627,7 +627,7 @@ def main() -> None:
     # 4. Self-play loop
     # ------------------------------------------------------------------
     train_rows = []
-    if getattr(args, "load_dataset", None):
+    if getattr(args, "load_dataset", None) and args.load_dataset.lower() != "none":
         print(f"\n=== Loading pre-generated dataset from {args.load_dataset} ===")
         train_rows = [json.loads(line) for line in Path(args.load_dataset).read_text(encoding="utf-8").splitlines() if line.strip()]
         args.selfplay_iterations = 0  # Skip generation loop
@@ -672,7 +672,7 @@ def main() -> None:
         d_advantages = [r - d_mean for r in d_rewards]
 
         valid_count = sum(1 for r in a_rows if r["valid"])
-        threshold = 0.45
+        threshold = 0.3
         pass_rate = sum(1 for r in d_rewards if r >= threshold) / len(d_rewards) if d_rewards else 0.0
         
         iter_summary = {
@@ -874,7 +874,7 @@ def main() -> None:
     _tf.logging.set_verbosity_info()
     
     resume_val = None
-    if getattr(args, "resume_from_checkpoint", None):
+    if getattr(args, "resume_from_checkpoint", None) and args.resume_from_checkpoint.lower() != "none":
         resume_val = True if args.resume_from_checkpoint.lower() == "true" else args.resume_from_checkpoint
         
     trainer.train(resume_from_checkpoint=resume_val)

@@ -212,8 +212,8 @@ def normalize_defender_reward(r: float) -> float:
 def attacker_reward(
     defender_rewards: list[float],
     penalty: float = -0.1,
-    threshold: float = 0.45,
-    tau: float = 0.05,
+    threshold: float = 0.3,
+    tau: float = 0.1,
 ) -> float:
     """Gaussian binary-pass-rate reward for the Attacker.
 
