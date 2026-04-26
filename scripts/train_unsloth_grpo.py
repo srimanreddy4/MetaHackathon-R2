@@ -448,7 +448,62 @@ def main() -> None:
     parser.add_argument("--lora-alpha", type=int, default=32)
     parser.add_argument("--resume-from-checkpoint", type=Path, default=None)
     parser.add_argument("--seed", type=int, default=20260424)
+    parser.add_argument("--print-completions", action="store_true")
+    parser.add_argument("--verbose", action="store_true")
+    parser.add_argument("--dynamic-curriculum", action="store_true")
+    parser.add_argument("--curriculum-update-every", type=int, default=40)
+    parser.add_argument("--curriculum-evolve-iterations", type=int, default=0)
+    parser.add_argument("--curriculum-evolve-warmup-steps", type=int, default=100)
+    parser.add_argument("--curriculum-evolve-frequency", type=int, default=2)
+    parser.add_argument("--max-buffer-size", type=int, default=0)
+
     args = parser.parse_args()
+    return args
+
+
+def get_default_args(**kwargs) -> Any:
+    """Helper to get default arguments for notebook usage without CLI parser."""
+    from types import SimpleNamespace
+
+    defaults = {
+        "model_name": "unsloth/Qwen2.5-3B-Instruct-bnb-4bit",
+        "out_dir": Path("training_results/unsloth_grpo"),
+        "curriculum_buffer": Path("curriculum_results/buffer.json"),
+        "max_tasks": 120,
+        "max_steps": 600,
+        "per_device_train_batch_size": 4,
+        "gradient_accumulation_steps": 2,
+        "num_generations": 4,
+        "max_seq_length": 1536,
+        "max_prompt_length": 1024,
+        "max_completion_length": 256,
+        "lr": 5e-6,
+        "temperature": 0.8,
+        "beta": 0.02,
+        "scale_rewards": "batch",
+        "loss_type": "dr_grpo",
+        "reward_mode": "hard",
+        "prompt_mode": "hard",
+        "prompt_variants": 1,
+        "logging_steps": 5,
+        "save_steps": 100,
+        "eval_tasks": 24,
+        "lora_rank": 16,
+        "lora_alpha": 32,
+        "resume_from_checkpoint": None,
+        "seed": 20260424,
+        "print_completions": False,
+        "verbose": False,
+        "dynamic_curriculum": False,
+        "curriculum_update_every": 40,
+        "curriculum_evolve_iterations": 0,
+        "curriculum_evolve_warmup_steps": 100,
+        "curriculum_evolve_frequency": 2,
+        "max_buffer_size": 0,
+    }
+    defaults.update(kwargs)
+    return SimpleNamespace(**defaults)
+
 
     os.environ.setdefault("WANDB_DISABLED", "true")
     os.environ.setdefault("TOKENIZERS_PARALLELISM", "false")
