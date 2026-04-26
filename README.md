@@ -41,10 +41,21 @@ This result is intentionally reported as an interrupted checkpoint run, not a fi
 
 ![Easy GRPO Completion Health](docs/plots/easy_grpo_qwen3b_completion_health.png)
 
+Additional in-domain evaluation artifacts are available in `eval_results/easy_grpo_analysis/` and documented in `docs/EASY_GRPO_EVALUATION.md`. They break the checkpoint down by training step, tool-use behavior, fault type, and root service.
+
+| Process metric | Value |
+| --- | ---: |
+| Required remediation coverage | 0.9833 |
+| All required remediations exact | 0.9667 |
+| Diagnostic before mutation | 0.6333 |
+| Early `declare_resolved` rate | 0.4000 |
+| Unsafe stateful restart/undo rate | 0.3333 |
+
 To regenerate the checkpoint report and plots directly inside Kaggle after stopping a run:
 
 ```bash
 bash scripts/run_kaggle_qwen3b_grpo.sh easy-summary
+bash scripts/run_kaggle_qwen3b_grpo.sh easy-analysis
 ```
 
 That writes:

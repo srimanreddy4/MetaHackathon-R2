@@ -261,6 +261,23 @@ case "${MODE}" in
       --eval-tasks 32 \
       --reward-mode easy
     ;;
+  easy-analysis)
+    python scripts/analyze_easy_grpo_generations.py \
+      --run-dir training_results/unsloth_grpo_qwen3b_easy \
+      --artifact-archive "${EASY_ARTIFACT_ARCHIVE:-/kaggle/input/datasets/srimanreddy/artifacts/easy_grpo_qwen3b_artifacts.tar.gz}" \
+      --out-dir eval_results/easy_grpo_analysis
+    ;;
+  easy-checkpoint-curve)
+    python scripts/evaluate_easy_checkpoint_curve.py \
+      --run-dir training_results/unsloth_grpo_qwen3b_easy \
+      --artifact-archive "${EASY_ARTIFACT_ARCHIVE:-/kaggle/input/datasets/srimanreddy/artifacts/easy_grpo_qwen3b_artifacts.tar.gz}" \
+      --model-name "${MODEL_NAME}" \
+      --out-dir eval_results/easy_grpo_checkpoint_curve \
+      --max-seq-length 1536 \
+      --max-completion-length 256 \
+      --eval-tasks 32 \
+      --reward-mode easy
+    ;;
   rcaeval-qwen-test)
     python scripts/evaluate_rcaeval_qwen_adapter.py \
       --run-dir training_results/unsloth_grpo_qwen3b_easy \
@@ -294,6 +311,8 @@ Usage:
   bash scripts/run_kaggle_qwen3b_grpo.sh summary
   bash scripts/run_kaggle_qwen3b_grpo.sh easy-summary
   bash scripts/run_kaggle_qwen3b_grpo.sh easy-eval-checkpoint
+  bash scripts/run_kaggle_qwen3b_grpo.sh easy-analysis
+  bash scripts/run_kaggle_qwen3b_grpo.sh easy-checkpoint-curve
   bash scripts/run_kaggle_qwen3b_grpo.sh rcaeval-qwen-test
   bash scripts/run_kaggle_qwen3b_grpo.sh export-easy-artifacts
   bash scripts/run_kaggle_qwen3b_grpo.sh copy-easy-artifacts
