@@ -36,7 +36,7 @@ This Space lets you:
 4. **Read the methodology** — research framing, reward composition, key
    results, and citations.
 
-See the full blog post `<hf-blog-link>` and code `<github-link>` for details.
+See the full [blog post](https://huggingface.co/spaces/NeerjaK/OnCallEnv/blob/main/blog.md), [code on GitHub](https://github.com/srimanreddy4/MetaHackathon-R2/tree/hf), and [Colab training notebook](https://colab.research.google.com/drive/1KhS2mJ7VKm5o3yRzg47rrjJPUlMj2IQg?usp=sharing) for details.
 
 ## Quick local run
 

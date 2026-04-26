@@ -422,10 +422,10 @@ with gr.Blocks(
 
                         ### Links
 
-                        - GitHub: `<github-link>`
-                        - Model card: `<hf-model-link>`
-                        - Curriculum buffer dataset: `<hf-dataset-link>`
-                        - Blog post: `<hf-blog-link>`
+                        - GitHub: [srimanreddy4/MetaHackathon-R2](https://github.com/srimanreddy4/MetaHackathon-R2/tree/hf)
+                        - HF Space: [NeerjaK/OnCallEnv](https://huggingface.co/spaces/NeerjaK/OnCallEnv)
+                        - Colab: [Training notebook](https://colab.research.google.com/drive/1KhS2mJ7VKm5o3yRzg47rrjJPUlMj2IQg?usp=sharing)
+                        - Blog post: [blog.md](https://huggingface.co/spaces/NeerjaK/OnCallEnv/blob/main/blog.md)
                         """
                     )
                 with gr.Column(scale=1):
