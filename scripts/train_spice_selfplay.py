@@ -628,8 +628,16 @@ def main() -> None:
     # ------------------------------------------------------------------
     train_rows = []
     if getattr(args, "load_dataset", None) and args.load_dataset.lower() != "none":
-        print(f"\n=== Loading pre-generated dataset from {args.load_dataset} ===")
-        train_rows = [json.loads(line) for line in Path(args.load_dataset).read_text(encoding="utf-8").splitlines() if line.strip()]
+        dataset_path = Path(args.load_dataset)
+        if not dataset_path.exists():
+            fallback_paths = [
+                args.out_dir / dataset_path.name,
+                Path("training_results/spice_selfplay_v2") / dataset_path.name,
+                Path("/kaggle/working/MetaHackathon-R2/training_results/spice_selfplay_v2") / dataset_path.name,
+            ]
+            dataset_path = next((path for path in fallback_paths if path.exists()), dataset_path)
+        print(f"\n=== Loading pre-generated dataset from {dataset_path} ===")
+        train_rows = [json.loads(line) for line in dataset_path.read_text(encoding="utf-8").splitlines() if line.strip()]
         args.selfplay_iterations = 0  # Skip generation loop
 
     print("\n=== Starting SPICE Self-Play ===")

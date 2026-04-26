@@ -6,6 +6,10 @@ __pycache__/
 venv/
 
 training_results/
+!training_results/
+training_results/*
+!training_results/spice_selfplay_v2/
+!training_results/spice_selfplay_v2/selfplay_dataset.jsonl
 notebooks/*.zip
 *.pt
 *.pth
