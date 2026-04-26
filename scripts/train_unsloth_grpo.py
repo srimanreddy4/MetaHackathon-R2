@@ -312,6 +312,7 @@ def main() -> None:
     parser.add_argument("--lora-rank", type=int, default=16)
     parser.add_argument("--lora-alpha", type=int, default=32)
     parser.add_argument("--seed", type=int, default=20260424)
+    parser.add_argument("--resume-from-checkpoint", type=str, default=None)
     args = parser.parse_args()
 
     os.environ.setdefault("WANDB_DISABLED", "true")
@@ -398,7 +399,12 @@ def main() -> None:
     else:
         trainer_kwargs["tokenizer"] = tokenizer
     trainer = GRPOTrainer(**trainer_kwargs)
-    trainer.train()
+    
+    resume_val = None
+    if getattr(args, "resume_from_checkpoint", None):
+        resume_val = True if args.resume_from_checkpoint.lower() == "true" else args.resume_from_checkpoint
+        
+    trainer.train(resume_from_checkpoint=resume_val)
 
     adapter_dir = args.out_dir / "adapter"
     model.save_pretrained(adapter_dir)

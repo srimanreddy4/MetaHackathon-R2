@@ -538,6 +538,8 @@ def main() -> None:
     parser.add_argument("--report-to", type=str, default="tensorboard", help="huggingface, wandb, tensorboard, or none")
     parser.add_argument("--push-to-hub", action="store_true")
     parser.add_argument("--hub-model-id", type=str, default=None)
+    parser.add_argument("--resume-from-checkpoint", type=str, default=None, help="Path to checkpoint dir, or 'True' to resume from latest")
+    parser.add_argument("--load-dataset", type=str, default=None, help="Path to selfplay_dataset.jsonl to skip generation phase")
     parser.add_argument("--eval-tasks", type=int, default=12)
     parser.add_argument("--max-tasks", type=int, default=120)
 
@@ -624,6 +626,12 @@ def main() -> None:
     # ------------------------------------------------------------------
     # 4. Self-play loop
     # ------------------------------------------------------------------
+    train_rows = []
+    if getattr(args, "load_dataset", None):
+        print(f"\n=== Loading pre-generated dataset from {args.load_dataset} ===")
+        train_rows = [json.loads(line) for line in Path(args.load_dataset).read_text(encoding="utf-8").splitlines() if line.strip()]
+        args.selfplay_iterations = 0  # Skip generation loop
+
     print("\n=== Starting SPICE Self-Play ===")
     from tqdm.auto import tqdm
     all_attacker_data: list[dict] = []
@@ -695,52 +703,51 @@ def main() -> None:
     # ------------------------------------------------------------------
     # 5. Build combined dataset for GRPOTrainer
     # ------------------------------------------------------------------
-    print("\n=== Building combined dataset for DrGRPO training ===")
-    train_rows: list[dict[str, Any]] = []
+    if not getattr(args, "load_dataset", None):
+        print("\n=== Building combined dataset for DrGRPO training ===")
+        train_rows = []
 
-    # Attacker rows → prompts for attacker role
-    for row in all_attacker_data:
-        spec = next((s for s in parent_specs if s.task_id == row["parent"]), parent_specs[0])
-        train_rows.append({
-            "prompt": [{"role": "user", "content": build_attacker_prompt(spec)}],
-            "role": "attacker",
-            "parent_task_id": row["parent"],
-            "task_id": row.get("child_task_id", ""),
-            "spec": None,  # Ensure consistent schema
-            "root_service": "",
-            "root_category": "",
-        })
+        # Attacker rows → prompts for attacker role
+        for row in all_attacker_data:
+            spec = next((s for s in parent_specs if s.task_id == row["parent"]), parent_specs[0])
+            train_rows.append({
+                "prompt": [{"role": "user", "content": build_attacker_prompt(spec)}],
+                "role": "attacker",
+                "parent_task_id": row["parent"],
+                "task_id": row.get("child_task_id", ""),
+                "spec": None,  # Ensure consistent schema
+                "root_service": "",
+                "root_category": "",
+            })
 
-    # Defender rows → prompts for defender role
-    for row in all_defender_data:
-        spec_dict = row.get("spec")
-        if spec_dict:
-            spec = ScenarioSpec.model_validate(spec_dict)
-        else:
-            spec = next((s for s in parent_specs if s.task_id == row["task_id"]), None)
-            
-        if spec is None:
-            continue
-        graph = compile_scenario(spec)
-        train_rows.append({
-            "prompt": [{"role": "user", "content": build_defender_prompt(spec)}],
-            "role": "defender",
-            "parent_task_id": "",
-            "task_id": spec.task_id,
-            "spec": spec.model_dump(),
-            "root_service": graph.root_cause_service,
-            "root_category": graph.root_cause_category,
-        })
+        # Defender rows → prompts for defender role
+        for row in all_defender_data:
+            spec_dict = row.get("spec")
+            if spec_dict:
+                spec = ScenarioSpec.model_validate(spec_dict)
+            else:
+                spec = next((s for s in parent_specs if s.task_id == row["task_id"]), None)
+                
+            if spec is None:
+                continue
+            graph = compile_scenario(spec)
+            train_rows.append({
+                "prompt": [{"role": "user", "content": build_defender_prompt(spec)}],
+                "role": "defender",
+                "parent_task_id": "",
+                "task_id": spec.task_id,
+                "spec": spec.model_dump(),
+                "root_service": graph.root_cause_service,
+                "root_category": graph.root_cause_category,
+            })
 
-    attacker_rows = [r for r in train_rows if r['role'] == 'attacker']
-    defender_rows = [r for r in train_rows if r['role'] == 'defender']
-    train_rows = attacker_rows + defender_rows
-    print(f"Combined training dataset: {len(train_rows)} rows (Attacker first, Defender second)")
+        rng.shuffle(train_rows)
+        print(f"Combined training dataset: {len(train_rows)} rows")
 
-    # SAVING SELF PLAY GENERATIONS
-    dataset_path = args.out_dir / "selfplay_dataset.jsonl"
-    dataset_path.write_text("\n".join(json.dumps(row) for row in train_rows) + "\n", encoding="utf-8")
-    print(f"Saved generated dataset to {dataset_path}")
+        # SAVING SELF PLAY GENERATIONS
+        dataset_path = args.out_dir / "selfplay_dataset.jsonl"
+        dataset_path.write_text("\n".join(json.dumps(row) for row in train_rows) + "\n", encoding="utf-8")
+        print(f"Saved generated dataset to {dataset_path}")
 
     # ------------------------------------------------------------------
     # 6. GRPOTrainer (DrGRPO)
@@ -842,7 +849,6 @@ def main() -> None:
 
     train_dataset = Dataset.from_list(train_rows)
     training_args = make_grpo_config(args)
-    training_args.dataloader_drop_last = False
     trainer_kwargs: dict[str, Any] = {
         "model": model,
         "reward_funcs": [attacker_reward, defender_reward],
@@ -866,7 +872,12 @@ def main() -> None:
     # Ensure TRL's built-in step logs reach stdout even in notebook cells.
     import transformers as _tf
     _tf.logging.set_verbosity_info()
-    trainer.train()
+    
+    resume_val = None
+    if getattr(args, "resume_from_checkpoint", None):
+        resume_val = True if args.resume_from_checkpoint.lower() == "true" else args.resume_from_checkpoint
+        
+    trainer.train(resume_from_checkpoint=resume_val)
 
     # ------------------------------------------------------------------
     # 7. Save adapter & final evaluation

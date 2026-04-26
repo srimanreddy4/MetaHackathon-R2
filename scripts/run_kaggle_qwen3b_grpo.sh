@@ -43,7 +43,7 @@ run_train() {
     --save-steps "${save_steps}" \
     --logging-steps "${LOGGING_STEPS:-5}" \
     --push-to-hub \
-    --hub-model-id "NeerjaKasture/spice-qwen-1.5b-grpo"
+    --hub-model-id "NeerjaK/spice-qwen-1.5b-grpo"
 }
 
 case "${MODE}" in
