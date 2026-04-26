@@ -17,6 +17,7 @@ import inspect
 import json
 import os
 import random
+import re
 import time
 from pathlib import Path
 from typing import Any
@@ -56,6 +57,79 @@ SEED_TASKS = [
     "seed_replica_lag",
     "seed_http_503_loop",
 ]
+
+
+def _checkpoint_step(path: Path) -> int:
+    match = re.search(r"checkpoint-(\d+)$", path.name)
+    return int(match.group(1)) if match else -1
+
+
+def _looks_like_trainer_checkpoint(path: Path) -> bool:
+    return path.exists() and (
+        (path / "trainer_state.json").exists()
+        or (path / "adapter_model.safetensors").exists()
+        or (path / "pytorch_model.bin").exists()
+    )
+
+
+def resolve_resume_checkpoint(value: str | None, out_dir: Path) -> str | bool | None:
+    """Resolve local, latest-local, or Hugging Face checkpoint references.
+
+    Transformers Trainer can only resume from a local checkpoint directory.
+    This helper lets Kaggle pass:
+
+    - true
+    - training_results/.../checkpoint-50
+    - NeerjaK/spice-qwen-1.5b-grpo
+    - NeerjaK/spice-qwen-1.5b-grpo/checkpoint-50
+    """
+
+    if not value or value.lower() == "none":
+        return None
+    if value.lower() == "true":
+        return True
+
+    candidate = Path(value)
+    if _looks_like_trainer_checkpoint(candidate):
+        return str(candidate)
+
+    latest_local = sorted(out_dir.glob("checkpoint-*"), key=_checkpoint_step)
+    if candidate == out_dir and latest_local:
+        return str(latest_local[-1])
+
+    # Hugging Face repo id, optionally with a checkpoint subdirectory after
+    # the standard owner/repo pair.
+    parts = value.strip("/").split("/")
+    if len(parts) >= 2 and not value.startswith((".", "/")):
+        repo_id = "/".join(parts[:2])
+        subdir = "/".join(parts[2:])
+        try:
+            from huggingface_hub import snapshot_download
+
+            local_root = Path(
+                snapshot_download(
+                    repo_id=repo_id,
+                    repo_type="model",
+                    token=os.environ.get("HF_TOKEN") or os.environ.get("HUGGINGFACE_HUB_TOKEN"),
+                )
+            )
+        except Exception as exc:
+            raise RuntimeError(f"Could not download Hugging Face checkpoint repo {repo_id}: {exc}") from exc
+
+        if subdir:
+            resolved = local_root / subdir
+            if not _looks_like_trainer_checkpoint(resolved):
+                raise FileNotFoundError(f"Downloaded {repo_id}, but {subdir} is not a valid checkpoint under {local_root}")
+            return str(resolved)
+
+        checkpoints = sorted(local_root.glob("checkpoint-*"), key=_checkpoint_step)
+        if checkpoints:
+            return str(checkpoints[-1])
+        if _looks_like_trainer_checkpoint(local_root):
+            return str(local_root)
+        raise FileNotFoundError(f"Downloaded {repo_id}, but no checkpoint-* directory or trainer checkpoint files were found under {local_root}")
+
+    raise FileNotFoundError(f"Could not resolve resume checkpoint: {value}")
 
 
 # ---------------------------------------------------------------------------
@@ -881,9 +955,9 @@ def main() -> None:
     import transformers as _tf
     _tf.logging.set_verbosity_info()
     
-    resume_val = None
-    if getattr(args, "resume_from_checkpoint", None) and args.resume_from_checkpoint.lower() != "none":
-        resume_val = True if args.resume_from_checkpoint.lower() == "true" else args.resume_from_checkpoint
+    resume_val = resolve_resume_checkpoint(getattr(args, "resume_from_checkpoint", None), args.out_dir)
+    if resume_val:
+        print(f"Resuming trainer from checkpoint: {resume_val}")
         
     trainer.train(resume_from_checkpoint=resume_val)
 
