@@ -30,6 +30,7 @@ COMMAND_RE = re.compile(
 API_BASE_URL = os.getenv("API_BASE_URL") or "https://router.huggingface.co/v1"
 API_KEY = os.getenv("API_KEY") or os.getenv("HF_TOKEN")
 MODEL_NAME = os.getenv("MODEL_NAME") or "Qwen/Qwen2.5-72B-Instruct:novita"
+ENV_BASE_URL = os.getenv("ENV_BASE_URL", "http://localhost:7860")
 
 
 def extract_completion_text(completion: Any) -> str:
@@ -75,7 +76,7 @@ def main() -> None:
     client = OpenAI(base_url=args.api_base, api_key=api_key)
 
     # Initialize Environment
-    env = OnCallRedShiftEnv()
+    env = OnCallRedShiftEnv(base_url=ENV_BASE_URL)
     obs = env.reset(task_id=args.task_id)
     
     graph = env._runtime.graph

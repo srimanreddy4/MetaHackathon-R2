@@ -42,9 +42,13 @@ class OnCallRedShiftEnv(Environment[Action, Observation, State]):
         self._state = State()
         self._last_reward = 0.0
 
-    def reset(self, seed: Optional[int] = None, episode_id: Optional[str] = None, task_id: Optional[str] = None, **kwargs: Any) -> Observation:
+    def reset(self, seed: Optional[int] = None, episode_id: Optional[str] = None, task_id: Optional[str] = None, custom_spec: Optional[dict[str, Any]] = None, **kwargs: Any) -> Observation:
         self._reset_rubric()
-        spec = self._load_scenario(task_id or episode_id or kwargs.get("task_id"))
+        if custom_spec:
+            spec = ScenarioSpec.model_validate(custom_spec)
+        else:
+            spec = self._load_scenario(task_id or episode_id or kwargs.get("task_id"))
+            
         if seed is not None:
             spec = spec.model_copy(update={"seed": seed})
         self._scenario = spec
