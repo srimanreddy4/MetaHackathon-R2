@@ -1,0 +1,146 @@
+{
+  "status": "complete",
+  "mode": "baro_telemetry_ranker_baseline",
+  "source": {
+    "benchmark": "RCAEval public quickstart sample",
+    "sample_url": "https://github.com/phamquiluan/baro/releases/download/0.0.4/simple_data.csv",
+    "paper_repo": "https://github.com/phamquiluan/RCAEval"
+  },
+  "data_path": "external_data/rcaeval/simple_data.csv",
+  "num_rows": 721,
+  "num_metrics": 47,
+  "anomaly_timestamp": 1692569339,
+  "window": 20,
+  "method": "baro",
+  "expected_root": "emailservice_mem",
+  "prediction": {
+    "root_cause_service": "emailservice",
+    "root_cause_signal": "mem"
+  },
+  "score": {
+    "expected_root": "emailservice_mem",
+    "expected_service": "emailservice",
+    "expected_signal": "mem",
+    "predicted_service": "emailservice",
+    "predicted_signal": "mem",
+    "service_match": true,
+    "signal_match": true,
+    "exact_metric_match": true
+  },
+  "top_metrics": [
+    {
+      "metric": "emailservice_mem",
+      "service": "emailservice",
+      "signal": "mem",
+      "score": 3.03104e+17,
+      "before_mean": 42315776.0,
+      "after_mean": 42332931.54570637,
+      "delta": 17155.545706368983
+    },
+    {
+      "metric": "recommendationservice_mem",
+      "service": "recommendationservice",
+      "signal": "mem",
+      "score": 2.70336e+17,
+      "before_mean": 47987382.04444444,
+      "after_mean": 47994159.51246537,
+      "delta": 6777.468020930886
+    },
+    {
+      "metric": "cartservice_mem",
+      "service": "cartservice",
+      "signal": "mem",
+      "score": 161.14285714285714,
+      "before_mean": 41060067.55555555,
+      "after_mean": 45447287.135734074,
+      "delta": 4387219.580178522
+    },
+    {
+      "metric": "checkoutservice_latency",
+      "service": "checkoutservice",
+      "signal": "latency",
+      "score": 150.73815184254522,
+      "before_mean": 0.05507797109546466,
+      "after_mean": 0.21828019634010457,
+      "delta": 0.1632022252446399
+    },
+    {
+      "metric": "cartservice_latency",
+      "service": "cartservice",
+      "signal": "latency",
+      "score": 40.98206668173928,
+      "before_mean": 0.008368986184017668,
+      "after_mean": 0.08760642480322765,
+      "delta": 0.07923743861920998
+    },
+    {
+      "metric": "cartservice_cpu",
+      "service": "cartservice",
+      "signal": "cpu",
+      "score": 25.704818738152976,
+      "before_mean": 5.345519934472922,
+      "after_mean": 27.432653039207057,
+      "delta": 22.087133104734136
+    },
+    {
+      "metric": "recommendationservice_workload",
+      "service": "recommendationservice",
+      "signal": "workload",
+      "score": 5.571428571428571,
+      "before_mean": 72.78078055555557,
+      "after_mean": 74.70272299168975,
+      "delta": 1.921942436134188
+    },
+    {
+      "metric": "cartservice_workload",
+      "service": "cartservice",
+      "signal": "workload",
+      "score": 5.157894736842105,
+      "before_mean": 97.88134166666667,
+      "after_mean": 101.41190304709141,
+      "delta": 3.530561380424743
+    },
+    {
+      "metric": "adservice_workload",
+      "service": "adservice",
+      "signal": "workload",
+      "score": 5.066666666666666,
+      "before_mean": 61.04332777777778,
+      "after_mean": 59.79614958448752,
+      "delta": -1.2471781932902601
+    },
+    {
+      "metric": "frontend-external_workload",
+      "service": "frontend-external",
+      "signal": "workload",
+      "score": 4.636363636363637,
+      "before_mean": 52.2807638888889,
+      "after_mean": 52.50188088642659,
+      "delta": 0.22111699753769187
+    },
+    {
+      "metric": "frontend_workload",
+      "service": "frontend",
+      "signal": "workload",
+      "score": 4.3,
+      "before_mean": 51.277144444444446,
+      "after_mean": 52.21810526315789,
+      "delta": 0.9409608187134424
+    },
+    {
+      "metric": "productcatalogservice_workload",
+      "service": "productcatalogservice",
+      "signal": "workload",
+      "score": 3.615023474178404,
+      "before_mean": 571.2352500000001,
+      "after_mean": 578.7514238227146,
+      "delta": 7.516173822714563
+    }
+  ],
+  "prompt_path": "eval_results/rcaeval_transfer/prompt.txt",
+  "model_output": "",
+  "plots": [
+    "eval_results/rcaeval_transfer/rcaeval_sample_metric_ranking.png",
+    "eval_results/rcaeval_transfer/rcaeval_sample_transfer_score.png"
+  ]
+}

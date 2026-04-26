@@ -261,6 +261,15 @@ case "${MODE}" in
       --eval-tasks 32 \
       --reward-mode easy
     ;;
+  rcaeval-qwen-test)
+    python scripts/evaluate_rcaeval_qwen_adapter.py \
+      --run-dir training_results/unsloth_grpo_qwen3b_easy \
+      --model-name "${MODEL_NAME}" \
+      --out-dir eval_results/rcaeval_qwen_easy \
+      --max-seq-length 1536 \
+      --max-input-tokens 1400 \
+      --max-new-tokens 160
+    ;;
   *)
     cat >&2 <<EOF
 Unknown mode: ${MODE}
@@ -284,6 +293,7 @@ Usage:
   bash scripts/run_kaggle_qwen3b_grpo.sh summary
   bash scripts/run_kaggle_qwen3b_grpo.sh easy-summary
   bash scripts/run_kaggle_qwen3b_grpo.sh easy-eval-checkpoint
+  bash scripts/run_kaggle_qwen3b_grpo.sh rcaeval-qwen-test
   bash scripts/run_kaggle_qwen3b_grpo.sh export-easy-artifacts
   bash scripts/run_kaggle_qwen3b_grpo.sh copy-easy-artifacts
   bash scripts/run_kaggle_qwen3b_grpo.sh archive

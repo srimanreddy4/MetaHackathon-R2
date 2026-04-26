@@ -1,0 +1,17 @@
+You are an SRE root-cause analysis agent.
+Given public RCAEval microservice telemetry, identify the single most likely root-cause service and signal.
+Return only compact JSON with keys root_cause_service, root_cause_signal, evidence.
+Anomaly timestamp: 1692569339
+Top anomalous metric deltas:
+- emailservice_mem: score=303104000000000000.000, before_mean=42315776.0000, after_mean=42332931.5457, delta=17155.5457
+- recommendationservice_mem: score=270336000000000000.000, before_mean=47987382.0444, after_mean=47994159.5125, delta=6777.4680
+- cartservice_mem: score=161.143, before_mean=41060067.5556, after_mean=45447287.1357, delta=4387219.5802
+- checkoutservice_latency: score=150.738, before_mean=0.0551, after_mean=0.2183, delta=0.1632
+- cartservice_latency: score=40.982, before_mean=0.0084, after_mean=0.0876, delta=0.0792
+- cartservice_cpu: score=25.705, before_mean=5.3455, after_mean=27.4327, delta=22.0871
+- recommendationservice_workload: score=5.571, before_mean=72.7808, after_mean=74.7027, delta=1.9219
+- cartservice_workload: score=5.158, before_mean=97.8813, after_mean=101.4119, delta=3.5306
+- adservice_workload: score=5.067, before_mean=61.0433, after_mean=59.7961, delta=-1.2472
+- frontend-external_workload: score=4.636, before_mean=52.2808, after_mean=52.5019, delta=0.2211
+- frontend_workload: score=4.300, before_mean=51.2771, after_mean=52.2181, delta=0.9410
+- productcatalogservice_workload: score=3.615, before_mean=571.2353, after_mean=578.7514, delta=7.5162

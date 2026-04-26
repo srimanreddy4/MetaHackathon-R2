@@ -5,3 +5,4 @@ __pycache__/
 *.tar.gz
 artifacts/models/*
 !artifacts/models/.gitkeep
+external_data/
