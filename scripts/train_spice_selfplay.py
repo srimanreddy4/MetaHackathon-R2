@@ -792,20 +792,28 @@ def main() -> None:
                 r_val = args.challenger_penalty * 0.5 if "set_field" in text.lower() or "<actions>" in text.lower() else args.challenger_penalty
                 rewards.append(r_val)
                 continue
-            # Heuristic complexity proxy - aligned with Gaussian on p intent
-            # We reward "medium-high" complexity scenarios as they are more likely to have p=0.5
-            c = 0.0
-            if spec.fault_secondary:
-                c += 0.25
-            if spec.red_herring and spec.red_herring != "none":
-                c += 0.2
-            if spec.schema_drift and spec.schema_drift != "none":
-                c += 0.2
-            if 0.4 <= spec.metric_noise <= 0.8:
-                c += 0.15
-            if 0.4 <= spec.blast_radius <= 0.8:
-                c += 0.2
-            rewards.append(min(1.0, 0.2 + c))
+            # === REAL GAUSSIAN REWARD (NO HEURISTIC) ===
+            # Run live Defender rollouts against the newly generated Attacker spec
+            import math
+            from spice_defender import build_defender_prompt, defender_rollout_reward
+            d_prompt = build_defender_prompt(spec)
+            
+            # We use 2 defender rollouts during the GRPO phase to save time while still getting a variance signal
+            # (model and tokenizer are available in the outer scope of main())
+            d_comps = generate_text(model, tokenizer, [d_prompt], max_new_tokens=args.max_defender_tokens, temperature=args.temperature, num_return=2)
+            
+            d_passes = []
+            for d_comp in d_comps:
+                try:
+                    r = defender_rollout_reward(spec, d_comp)
+                    d_passes.append(1.0 if r >= 0.3 else 0.0)
+                except Exception:
+                    d_passes.append(0.0)
+                    
+            p = sum(d_passes) / len(d_passes)
+            tau = 0.1
+            gaussian_reward = math.exp(-((p - 0.5) ** 2) / (2 * tau))
+            rewards.append(gaussian_reward)
         return rewards
 
     def defender_reward(completions, **kwargs):
